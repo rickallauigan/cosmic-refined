@@ -3,9 +3,10 @@
 A refined, performance-conscious COSMIC desktop experience with macOS-inspired styling, presets, and usability improvements.
 
 COSMIC Refined is an independent collection of optional visual and usability
-improvements for COSMIC Desktop. It combines native desktop configuration with
-careful theme integration, with accessibility and notification visibility as
-first-class goals.
+improvements for COSMIC Desktop. It focuses on notification visibility,
+COSMIC-native visual refinements, panel/dock presets, app/window switching,
+performance-conscious behavior and release polish. Accessibility remains a
+first-class goal.
 
 ## Features and principles
 
@@ -34,17 +35,15 @@ is included yet.
 
 ## Project roadmap
 
-Priority order: **notifications → installer UX → app switcher → performance benchmark → polish/release**.
+Priority order: **notifications → app switcher → performance benchmark → polish/release**.
 
 1. **Notifications:** validate the optional banner patch and improve notification
    center readability while preserving native integration and accessibility.
-2. **Installer UX:** improve explicit apply, backup, restore and removal workflows,
-   including theme installation and version/schema compatibility checks.
-3. **App switcher:** evaluate native app/window switching, previews and keyboard
+2. **App switcher:** evaluate native app/window switching, previews and keyboard
    ergonomics independently of launcher/search tools.
-4. **Performance benchmark:** add opt-in measurements for idle CPU/GPU usage and
+3. **Performance benchmark:** add opt-in measurements for idle CPU/GPU usage and
    visible rendering costs, without a persistent monitoring service.
-5. **Polish/release:** refine theme and optional panel/dock variants, verify
+4. **Polish/release:** refine theme and optional panel/dock variants, verify
    accessibility, and add screenshots, documentation and release structure.
 
 ## Performance philosophy
@@ -63,8 +62,11 @@ Other themes can be added without changing the project's identity.
 ## Presets
 
 [presets/macos-performance/](presets/macos-performance/README.md) contains the optional compact top panel and floating,
-rounded bottom dock preset. Its installer is explicitly invoked by the user and
-backs up panel/dock configuration before changing managed keys.
+rounded bottom dock preset. Its small `install.sh` apply/restore utility is explicitly
+invoked by the user and backs up panel/dock configuration before changing managed
+keys. Backup, restore, rollback, validation and idempotence remain feature-level
+safety mechanisms. A standalone installer application, GUI or wizard is outside
+project scope.
 
 ## Notification roadmap
 
@@ -74,10 +76,10 @@ notification theme control was identified. An [optional banner source patch](not
 high-visibility rendering, pending full compilation and live testing. Notification
 center improvements remain a roadmap.
 
-## Installation status
+## Component usage
 
-Early development: components are opt-in and installed separately. There is no
-all-in-one installer, startup hook or automatic desktop configuration. Read each
+Early development: components are opt-in and applied separately through their own
+instructions and utilities. Nothing runs automatically at startup. Read each
 component's instructions before applying it. No root access or new packages are
 required. Removing this checkout does not undo previously imported settings; use
 the component's restore/removal instructions first.
