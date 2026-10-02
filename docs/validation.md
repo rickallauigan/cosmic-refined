@@ -41,8 +41,8 @@ This also applies/reverses the pinned source patch in temporary fixtures, checks
 reapply/drift rejection, parses/formats changed Rust files, and compiles/runs the
 std-only policy tests for explicit opt-in, geometry, timestamp rollover and palette
 contrast. No Cargo dependencies are needed for those tests. Full libcosmic/daemon
-integration compilation is a separate prerequisite before calling this a release;
-the offline attempt was blocked by an uncached libcosmic dependency. No new runtime
+integration compilation has since passed on the disposable CI runner; the local
+offline attempt was blocked by an uncached libcosmic dependency. No new runtime
 package is introduced. See [patch status](../notifications/patches/README.md).
 
 ## Full pinned daemon build
@@ -56,3 +56,6 @@ storage; nothing is vendored into this project. Upstream Wayland/xkbcommon build
 headers are installed only on that disposable runner, not on the user's machine.
 The workflow neither starts nor installs a daemon. A passing run verifies compilation
 on that runner; controlled COSMIC/Wayland testing is still a separate milestone.
+
+See [recorded build evidence](notification-build-validation.md) for the passing run,
+exact source/dependency revisions, warnings and remaining runtime limitations.

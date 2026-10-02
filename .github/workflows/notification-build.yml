@@ -3,14 +3,8 @@ name: Notification patch build
 on:
   pull_request:
     paths:
-      - 'notifications/patches/**'
-      - 'tests/fixtures/**'
-      - '.github/workflows/notification-build.yml'
-  push:
-    branches: ['feat/notification-cards']
-    paths:
-      - 'notifications/patches/**'
-      - 'tests/fixtures/**'
+      - 'notifications/patches/*.patch'
+      - 'tests/fixtures/*.rs'
       - '.github/workflows/notification-build.yml'
   workflow_dispatch:
 

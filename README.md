@@ -73,7 +73,8 @@ project scope.
 [notifications/](notifications/README.md) tracks a more visible macOS-inspired card design using the existing
 COSMIC daemon where possible. COSMIC 1.9.0 uses shared theme/card colors; no isolated
 notification theme control was identified. An [optional banner source patch](notifications/patches/README.md) implements local
-high-visibility rendering, pending full compilation and live testing. Notification
+high-visibility rendering, with [full compilation verified](docs/notification-build-validation.md)
+and live testing still pending. Notification
 center improvements remain a roadmap.
 
 ## Component usage

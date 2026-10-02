@@ -1,9 +1,11 @@
 # Experimental high-visibility banner patch
 
-**Source prototype, not an installable release.** Full daemon compilation and live
-Wayland rendering are not verified. Offline `cargo check --locked --offline` could
-not resolve the uncached pinned libcosmic checkout; this is a dependency availability
-blocker, not a passing build. No daemon has been built, installed, replaced or started.
+**Compile-verified source prototype, not an installable release.** The pinned daemon
+passed full formatting, `cargo check --locked` and `cargo build --locked` on a
+disposable CI runner. See [build evidence](../../docs/notification-build-validation.md).
+Live Wayland rendering remains unverified. The earlier local offline attempt was
+blocked by missing libcosmic dependencies; CI resolved them through normal Cargo.
+A binary was built only on that runner; nothing was installed, replaced or started.
 
 Target: `pop-os/cosmic-notifications` commit
 `aa4dac2702506395ab76da1f6755e03b2ccb0db8` (`epoch-1.9.0`). The patch changes only
@@ -55,7 +57,7 @@ cargo check --locked
 
 Build prerequisites are the upstream Rust/native development requirements; do not
 install packages blindly. This repository provides no build automation or system
-installation. Before a release, compile the full locked graph and verify in an
+installation. The full locked graph now compiles; before a release, verify in an
 isolated COSMIC session: dark/light, stacked popups, missing icons, markup, long
 content, font scaling, narrow outputs, dismissal, activation, DND, timeout and
 history synchronization. Do not run two notification daemons in the live session.

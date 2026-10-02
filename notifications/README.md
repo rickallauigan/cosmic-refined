@@ -1,7 +1,8 @@
 # Notification design and visibility roadmap
 
 Status: an [experimental optional banner source patch](patches/README.md) is now
-available for the pinned 1.9.0 daemon. It is not compiled or live-rendering verified;
+available for the pinned 1.9.0 daemon. Full compilation is [CI-verified](../docs/notification-build-validation.md);
+live rendering remains unverified;
 there is no notification installer or session override. Keep the existing
 lightweight `cosmic-notifications` daemon in your live session. The migrated
 [1.9.0 investigation](../docs/notification-visibility.md) found shared theme/card
@@ -55,6 +56,6 @@ the native tray visible to review missed banners. The layout preset preserves it
 applets. Placement and timeout options are discussed in the investigation, with
 limitations; no notification configuration is automatically applied here.
 
-Future work includes full integration compilation, native configuration/localization,
+Future work includes controlled live testing, native configuration/localization,
 center rendering, manual usability verification and rendering/power measurements. No notification
 visibility improvement is claimed by the migrated performance theme itself.
