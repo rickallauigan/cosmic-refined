@@ -15,6 +15,38 @@ first-class goals.
 - Back up before changing configuration, support restore and easy removal.
 - Preserve upstream compatibility and clearly attribute derived work.
 
+## Launcher scope and coexistence
+
+Launcher/search workflows are delegated to Vicinae, the user's chosen primary
+launcher. Vicinae is intentionally outside COSMIC Refined's launcher scope;
+COSMIC Refined should coexist with it. COSMIC launcher polish, redesign, search UI,
+theming, integration and replacement work are excluded from this project's roadmap.
+
+COSMIC Refined focuses on desktop visuals, notifications, panel/dock layout,
+app switching, performance and usability. It does not add Vicinae as a dependency,
+modify its configuration, or provide launcher hooks, plugins or wrappers.
+
+App-switcher improvements remain a separate scope: window switching UX,
+app/window preview styling and keyboard switching ergonomics. They must use
+COSMIC-native facilities where practical and work independently of Vicinae,
+without taking over launcher/search workflows. No app-switcher implementation
+is included yet.
+
+## Project roadmap
+
+Priority order: **notifications → installer UX → app switcher → performance benchmark → polish/release**.
+
+1. **Notifications:** validate the optional banner patch and improve notification
+   center readability while preserving native integration and accessibility.
+2. **Installer UX:** improve explicit apply, backup, restore and removal workflows,
+   including theme installation and version/schema compatibility checks.
+3. **App switcher:** evaluate native app/window switching, previews and keyboard
+   ergonomics independently of launcher/search tools.
+4. **Performance benchmark:** add opt-in measurements for idle CPU/GPU usage and
+   visible rendering costs, without a persistent monitoring service.
+5. **Polish/release:** refine theme and optional panel/dock variants, verify
+   accessibility, and add screenshots, documentation and release structure.
+
 ## Performance philosophy
 
 Polish should come from readable surfaces, useful spacing and predictable behavior.
