@@ -1,7 +1,10 @@
 # Notification visibility on COSMIC 1.9.0
 
-**Result: documentation only.** Neither theme nor notification configuration is
-changed by this work. Keep the existing lightweight `cosmic-notifications` daemon.
+**Status: shared-theme investigation plus an experimental source patch.**
+The [optional banner patch](../notifications/patches/README.md) is an unverified
+source artifact, pending full daemon compilation and live rendering tests. It is
+not an installable release. Neither live theme nor notification configuration has
+been changed. Keep the existing lightweight `cosmic-notifications` daemon.
 The layout preset preserves the notification tray and changes panel/dock geometry;
 it does not restyle notification banners.
 
@@ -70,7 +73,11 @@ current theme-derived defaults. An opt-in opaque neutral surface, contrasting
 text and a subtle border could reuse native rendering without blur or another
 daemon. This requires a versioned setting and testing of banners, hover, stacked
 cards and dark/light themes; it is not a theme-only tweak. A private source patch
-would carry release maintenance, so no patch or rebuild is included here.
+carries release maintenance. COSMIC Refined now includes an isolated, opt-in
+[banner source patch](../notifications/patches/README.md) as an experimental
+prototype; no daemon rebuild or live installation has been completed. The stock
+renderer remains the default, and notification-center changes remain documentation
+only. Full compilation must pass before controlled live testing.
 
 Migrated from the old fork's `ed09a08` investigation; see [provenance](provenance.md).
 This migration does not claim a fresh runtime investigation or broader version support.
