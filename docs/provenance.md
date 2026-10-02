@@ -35,7 +35,10 @@ remains the prototype record; it is not a runtime, test or installation dependen
   validation entry point and future notification design direction are new here.
 - Old screenshots, Zed/Vivaldi integrations and unrelated fork content are excluded.
 
-All project additions and migrated material are distributed under MPL-2.0.
+Theme, preset and project documentation additions are distributed under MPL-2.0.
+The optional cosmic-notifications patch, its added Rust module and upstream test
+fixtures are GPL-3.0-only, matching the daemon; see
+[patch licensing](../notifications/patches/README.md).
 The root license is retained unchanged, and a copy accompanies the theme files.
 Attribution does not imply endorsement by xarbit or System76. Future integrations
 must retain their own upstream notices and identify their provenance.

@@ -1,13 +1,18 @@
 # Notification design and visibility roadmap
 
-Status: research and design direction only. COSMIC Refined currently provides
-**no notification style installer, daemon patch or rebuild**. Keep the existing
-lightweight `cosmic-notifications` daemon. The migrated
+Status: an [experimental optional banner source patch](patches/README.md) is now
+available for the pinned 1.9.0 daemon. It is not compiled or live-rendering verified;
+there is no notification installer or session override. Keep the existing
+lightweight `cosmic-notifications` daemon in your live session. The migrated
 [1.9.0 investigation](../docs/notification-visibility.md) found shared theme/card
 colors and no clean isolated notification theme control. Changing shared surfaces
 would also affect unrelated UI.
 
-## Proposed optional design
+See [architecture and exact source locations](../docs/notification-architecture.md).
+Banner geometry, local colors and static timestamps are implemented in the source
+prototype. Center readability remains a separately documented follow-up.
+
+## Design direction
 
 Aim for a macOS-inspired card layout with **higher visibility than macOS**, rather
 than reproducing its subtle contrast. This is a design goal to validate with users,
@@ -50,6 +55,6 @@ the native tray visible to review missed banners. The layout preset preserves it
 applets. Placement and timeout options are discussed in the investigation, with
 limitations; no notification configuration is automatically applied here.
 
-Future work includes a native implementation proposal, accessible visual prototypes,
-manual usability verification and rendering/power measurements. No notification
+Future work includes full integration compilation, native configuration/localization,
+center rendering, manual usability verification and rendering/power measurements. No notification
 visibility improvement is claimed by the migrated performance theme itself.

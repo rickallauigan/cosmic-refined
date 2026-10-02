@@ -38,8 +38,9 @@ backs up panel/dock configuration before changing managed keys.
 
 [notifications/](notifications/README.md) tracks a more visible macOS-inspired card design using the existing
 COSMIC daemon where possible. COSMIC 1.9.0 uses shared theme/card colors; no isolated
-notification theme control was identified. Notification styling remains a roadmap,
-not an implemented daemon patch.
+notification theme control was identified. An [optional banner source patch](notifications/patches/README.md) implements local
+high-visibility rendering, pending full compilation and live testing. Notification
+center improvements remain a roadmap.
 
 ## Installation status
 
@@ -59,7 +60,8 @@ verification. Old fork screenshots are not presented as results of this project.
 Uniform Glass Dark originates from
 [xarbit/cosmic-uniform-glass-theme](https://github.com/xarbit/cosmic-uniform-glass-theme).
 COSMIC Desktop and its native components are developed by System76 and contributors.
-This project uses MPL-2.0; the existing [LICENSE](LICENSE) is preserved. See
+Theme/preset work uses MPL-2.0; the existing [LICENSE](LICENSE) is preserved.
+The optional daemon patch and upstream fixtures use GPL-3.0-only. See
 [provenance](docs/provenance.md) for derived work and the prototype migration.
 
 ## Development status

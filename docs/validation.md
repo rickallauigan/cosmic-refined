@@ -28,3 +28,19 @@ SIGKILL/power loss and concurrent COSMIC Settings writes are not simulated. Keep
 the backup and avoid editing panel/dock settings during an operation. Live geometry,
 accessibility, theme import compatibility and power measurements require explicit
 manual testing later.
+
+## Optional notification source validation
+
+With an already installed Rust compiler and rustfmt, run:
+
+```sh
+bash scripts/validate.sh --notifications
+```
+
+This also applies/reverses the pinned source patch in temporary fixtures, checks
+reapply/drift rejection, parses/formats changed Rust files, and compiles/runs the
+std-only policy tests for explicit opt-in, geometry, timestamp rollover and palette
+contrast. No Cargo dependencies are needed for those tests. Full libcosmic/daemon
+integration compilation is a separate prerequisite before calling this a release;
+the offline attempt was blocked by an uncached libcosmic dependency. No new runtime
+package is introduced. See [patch status](../notifications/patches/README.md).
