@@ -1,0 +1,51 @@
+name: Notification patch build
+
+on:
+  pull_request:
+    paths:
+      - 'notifications/patches/*.patch'
+      - 'tests/fixtures/*.rs'
+      - '.github/workflows/notification-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pinned-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Set temporary Cargo paths
+        run: |
+          echo "CARGO_HOME=$RUNNER_TEMP/cargo" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_DIR=$RUNNER_TEMP/notification-target" >> "$GITHUB_ENV"
+      - name: Install upstream build prerequisites on disposable runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libxkbcommon-dev libwayland-dev pkg-config
+          rustup toolchain install 1.93.0 --profile minimal --component rustfmt
+      - name: Fetch exact release source and check fixture provenance
+        run: |
+          git init "$RUNNER_TEMP/cosmic-notifications"
+          git -C "$RUNNER_TEMP/cosmic-notifications" remote add origin https://github.com/pop-os/cosmic-notifications
+          git -C "$RUNNER_TEMP/cosmic-notifications" fetch --depth=1 origin aa4dac2702506395ab76da1f6755e03b2ccb0db8
+          git -C "$RUNNER_TEMP/cosmic-notifications" checkout --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/cosmic-notifications" rev-parse HEAD)" = aa4dac2702506395ab76da1f6755e03b2ccb0db8
+          cmp tests/fixtures/cosmic-notifications-1.9.0-app.rs "$RUNNER_TEMP/cosmic-notifications/src/app.rs"
+          cmp tests/fixtures/cosmic-notifications-1.9.0-main.rs "$RUNNER_TEMP/cosmic-notifications/src/main.rs"
+          git -C "$RUNNER_TEMP/cosmic-notifications" apply --check "$GITHUB_WORKSPACE/notifications/patches/cosmic-notifications-1.9.0-refined-cards.patch"
+          git -C "$RUNNER_TEMP/cosmic-notifications" apply "$GITHUB_WORKSPACE/notifications/patches/cosmic-notifications-1.9.0-refined-cards.patch"
+      - name: Check formatting
+        working-directory: ${{ runner.temp }}/cosmic-notifications
+        run: cargo +1.93.0 fmt --all -- --check
+      - name: Check locked dependency graph
+        working-directory: ${{ runner.temp }}/cosmic-notifications
+        run: cargo +1.93.0 check --locked
+      - name: Build locked dependency graph
+        working-directory: ${{ runner.temp }}/cosmic-notifications
+        run: cargo +1.93.0 build --locked

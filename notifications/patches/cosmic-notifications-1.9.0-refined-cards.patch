@@ -1,0 +1,434 @@
+--- a/src/app.rs
++++ b/src/app.rs
+@@ -51,6 +51,7 @@
+
+ struct CosmicNotifications {
+     core: Core,
++    refined: crate::refined_cards::Options,
+     active_surface: bool,
+     window_id: SurfaceId,
+     pending_notifications: Vec<Notification>,
+@@ -81,6 +82,112 @@
+ }
+
+ impl CosmicNotifications {
++    // Notification-local rendering. The stock shared `cards` path is unchanged.
++    fn refined_card<'a>(&'a self, notification: &'a Notification) -> Element<'a, Message> {
++        use cosmic::iced::widget::button::{Status, Style};
++        use cosmic::iced::{Background, Border, Color};
++        let critical = notification.urgency() == 2;
++        let accented = critical && self.refined.urgency_accent;
++        let close = cosmic::iced::widget::button(
++            icon::from_name("window-close-symbolic")
++                .size(16)
++                .symbolic(true),
++        )
++        .on_press(Message::Dismissed(notification.id))
++        .padding(8)
++        .class(cosmic::theme::iced::Button::Custom(Box::new(
++            |theme, status| {
++                let colors = crate::refined_cards::palette(theme.cosmic().is_dark, false);
++                let background =
++                    match status {
++                        Status::Hovered | Status::Pressed => Some(Background::Color(
++                            Color::from_rgb(colors.hover[0], colors.hover[1], colors.hover[2]),
++                        )),
++                        _ => None,
++                    };
++                Style {
++                    background,
++                    text_color: Color::from_rgb(colors.text[0], colors.text[1], colors.text[2]),
++                    border: Border {
++                        radius: 8.0.into(),
++                        ..Default::default()
++                    },
++                    ..Default::default()
++                }
++            },
++        )));
++        let app_name = if notification.app_name.is_empty() {
++            "Notification"
++        } else {
++            notification.app_name.as_str()
++        };
++        let header = row![
++            notification
++                .notification_icon()
++                .unwrap_or_else(|| icon::from_name("dialog-information-symbolic").icon())
++                .size(32),
++            column![
++                text::caption(app_name).size(14),
++                text::caption(crate::refined_cards::timestamp(notification.time)).size(12),
++            ]
++            .width(Length::Fill)
++            .spacing(2),
++            close,
++        ]
++        .spacing(12)
++        .align_y(Alignment::Center);
++        let title = text::body(notification.summary.as_str())
++            .size(18)
++            .font(iced::Font {
++                weight: iced::font::Weight::Bold,
++                ..Default::default()
++            })
++            .width(Length::Fill);
++        let body: Element<_> = Element::from(
++            rich_text(html_to_spans(&notification.body))
++                .size(15.0)
++                .width(Length::Fill),
++        )
++        .map(|_: ()| Message::Ignore);
++        let mut content = column![header, title, body].spacing(8).width(Length::Fill);
++        // Keep urgency understandable without relying on border color.
++        if critical {
++            content = content.push(text::caption("Critical notification").size(14));
++        }
++        cosmic::iced::widget::button(content)
++            .on_press(Message::ActivateNotification(notification.id))
++            .padding(16)
++            .width(Length::Fixed(self.refined.width() as f32))
++            .class(cosmic::theme::iced::Button::Custom(Box::new(
++                move |theme, status| {
++                    let colors = crate::refined_cards::palette(theme.cosmic().is_dark, accented);
++                    let surface = match status {
++                        Status::Hovered => colors.hover,
++                        Status::Pressed => colors.pressed,
++                        _ => colors.surface,
++                    };
++                    Style {
++                        background: Some(Background::Color(Color::from_rgb(
++                            surface[0], surface[1], surface[2],
++                        ))),
++                        text_color: Color::from_rgb(colors.text[0], colors.text[1], colors.text[2]),
++                        border: Border {
++                            color: Color::from_rgb(
++                                colors.border[0],
++                                colors.border[1],
++                                colors.border[2],
++                            ),
++                            width: if accented { 2.0 } else { 1.0 },
++                            radius: 18.0.into(),
++                        },
++                        border_radius: 18.0.into(),
++                        ..Default::default()
++                    }
++                },
++            )))
++            .into()
++    }
++
+     fn expire(&mut self, i: u32) -> Task<Message> {
+         let Some((c_pos, _)) = self.cards.iter().enumerate().find(|(_, n)| n.id == i) else {
+             return Task::none();
+@@ -315,13 +422,13 @@
+                     bottom: 8,
+                     left: 8,
+                 },
+-                size: Some((Some(300), Some(1))),
++                size: Some((Some(self.refined.width()), Some(1))),
+                 output: IcedOutput::Active, // TODO should we only create the notification on the output the applet is on?
+                 size_limits: Limits::NONE
+-                    .min_width(300.0)
++                    .min_width(self.refined.width() as f32)
+                     .min_height(1.0)
+                     .max_height(1920.0)
+-                    .max_width(300.0),
++                    .max_width(self.refined.width() as f32),
+                 ..Default::default()
+             }));
+         };
+@@ -351,14 +458,14 @@
+                     SctkPositioner {
+                         size: None,
+                         size_limits: Limits::NONE
+-                            .min_width(300.0)
++                            .min_width(self.refined.width() as f32)
+                             .min_height(1.0)
+                             .max_height(1920.0)
+-                            .max_width(300.0),
++                            .max_width(self.refined.width() as f32),
+                         anchor_rect: iced::Rectangle {
+                             x: 0,
+                             y: 6,
+-                            width: 300,
++                            width: self.refined.width() as i32,
+                             height: 1,
+                         },
+                         anchor: if self
+@@ -399,10 +506,10 @@
+                     SctkPositioner {
+                         size: None,
+                         size_limits: Limits::NONE
+-                            .min_width(300.0)
++                            .min_width(self.refined.width() as f32)
+                             .min_height(1.0)
+                             .max_height(1920.0)
+-                            .max_width(300.0),
++                            .max_width(self.refined.width() as f32),
+                         anchor_rect: p_size
+                             .map(|s| iced::Rectangle {
+                                 x: 0,
+@@ -474,6 +581,9 @@
+                             .iter()
+                             .rev()
+                             .map(|n| {
++                                if app.refined.enabled {
++                                    return (n.id, app.refined_card(n));
++                                }
+                                 let app_name = text::caption(if n.app_name.len() > 24 {
+                                     Cow::from(format!(
+                                         "{:.26}...",
+@@ -521,32 +631,39 @@
+                             .nth(nth)
+                             .unzip();
+
+-                        let card_list = cosmic::widget::cards(
+-                            app.notifications_id.clone(),
+-                            notif_elems.into_iter().collect(),
+-                            Message::Ignore,
+-                            None::<fn(bool) -> Message>,
+-                            Some(move |_| Message::ActivateNotification(ids.unwrap())),
+-                            "",
+-                            "",
+-                            "",
+-                            None,
+-                            true,
+-                        )
+-                        .width(Length::Fixed(300.));
++                        let card_list: Element<_> = if app.refined.enabled {
++                            notif_elems.unwrap()
++                        } else {
++                            cosmic::widget::cards(
++                                app.notifications_id.clone(),
++                                notif_elems.into_iter().collect(),
++                                Message::Ignore,
++                                None::<fn(bool) -> Message>,
++                                Some(move |_| Message::ActivateNotification(ids.unwrap())),
++                                "",
++                                "",
++                                "",
++                                None,
++                                true,
++                            )
++                            .width(Length::Fixed(300.))
++                            .into()
++                        };
+
+                         Element::from(
+                             autosize::autosize(card_list, autosize_id.1.clone())
+                                 .min_width(200.)
+                                 .min_height(100.)
+-                                .max_width(300.)
++                                .max_width(app.refined.width() as f32)
+                                 .max_height(1920.),
+                         )
+                         .map(cosmic::Action::App)
+                     })),
+                 ),
+             ));
+-            let rad_xs = self.core.system_theme().cosmic().radius_xs();
++            let rad_xs = self
++                .refined
++                .radius(self.core.system_theme().cosmic().radius_xs());
+
+             tasks.push(
+                 corner_radius(
+@@ -700,7 +817,12 @@
+     const APP_ID: &'static str = "com.system76.CosmicNotifications";
+
+     fn init(mut core: Core, _flags: ()) -> (Self, Task<Message>) {
+-        core.set_auto_blur(Auto::Popup | Auto::Window);
++        let refined = crate::refined_cards::Options::from_env();
++        core.set_auto_blur(if refined.enabled {
++            BitFlags::empty()
++        } else {
++            Auto::Popup | Auto::Window
++        });
+         core.set_auto_corner_radius(BitFlags::empty());
+         core.set_app_type(cosmic::core::AppType::System);
+         let helper = Config::new(
+@@ -725,6 +847,7 @@
+         (
+             CosmicNotifications {
+                 core,
++                refined,
+                 active_surface: false,
+                 window_id: SurfaceId::unique(),
+                 anchor: None,
+@@ -837,7 +960,9 @@
+                 size.width = size.width.max(1.);
+                 size.height = size.height.max(1.);
+                 p.2 = Some(size);
+-                let rad_xs = self.core.system_theme().cosmic().radius_xs();
++                let rad_xs = self
++                    .refined
++                    .radius(self.core.system_theme().cosmic().radius_xs());
+
+                 let pending = std::mem::take(&mut self.pending_notifications);
+
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -1,5 +1,6 @@
+ mod app;
+ mod config;
++mod refined_cards;
+ mod subscriptions;
+
+ use config::APP_ID;
+--- /dev/null
++++ b/src/refined_cards.rs
+@@ -0,0 +1,153 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// COSMIC Refined notification-local policy; no COSMIC configuration writes.
++use std::time::{SystemTime, UNIX_EPOCH};
++
++#[derive(Clone, Copy, Debug, Default)]
++pub struct Options {
++    pub enabled: bool,
++    pub urgency_accent: bool,
++}
++
++impl Options {
++    pub fn from_env() -> Self {
++        Self::parse(
++            std::env::var("COSMIC_REFINED_NOTIFICATION_CARDS")
++                .ok()
++                .as_deref(),
++            std::env::var("COSMIC_REFINED_NOTIFICATION_URGENCY")
++                .ok()
++                .as_deref(),
++        )
++    }
++
++    fn parse(enabled: Option<&str>, accent: Option<&str>) -> Self {
++        Self {
++            enabled: enabled == Some("1"),
++            urgency_accent: accent == Some("1"),
++        }
++    }
++
++    pub fn width(self) -> u32 {
++        if self.enabled { 380 } else { 300 }
++    }
++
++    pub fn radius(self, stock: [f32; 4]) -> [f32; 4] {
++        if self.enabled { [18.0; 4] } else { stock }
++    }
++}
++
++#[derive(Clone, Copy, Debug)]
++pub struct Palette {
++    pub surface: [f32; 3],
++    pub hover: [f32; 3],
++    pub pressed: [f32; 3],
++    pub text: [f32; 3],
++    pub border: [f32; 3],
++}
++
++pub fn palette(dark: bool, critical_accent: bool) -> Palette {
++    let mut result = if dark {
++        Palette {
++            surface: [0.10, 0.11, 0.13],
++            hover: [0.15, 0.16, 0.18],
++            pressed: [0.19, 0.20, 0.22],
++            text: [0.97; 3],
++            border: [0.55; 3],
++        }
++    } else {
++        Palette {
++            surface: [0.98; 3],
++            hover: [0.92; 3],
++            pressed: [0.87; 3],
++            text: [0.08, 0.09, 0.11],
++            border: [0.40; 3],
++        }
++    };
++    if critical_accent {
++        result.border = if dark {
++            [1.0, 0.65, 0.25]
++        } else {
++            [0.55, 0.24, 0.0]
++        };
++    }
++    result
++}
++
++// Absolute receipt time, not elapsed time: no timer or per-frame clock reads.
++// Explicit UTC avoids introducing a timezone crate or invoking a shell command.
++pub fn timestamp(time: SystemTime) -> String {
++    match time.duration_since(UNIX_EPOCH) {
++        Ok(duration) => {
++            let minutes = duration.as_secs() / 60;
++            format!("{:02}:{:02} UTC", (minutes / 60) % 24, minutes % 60)
++        }
++        Err(_) => String::from("Time unavailable"),
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++    use std::time::Duration;
++
++    #[test]
++    fn opt_in_is_explicit_and_preserves_stock_geometry() {
++        for value in [None, Some("0"), Some("true"), Some(""), Some("yes")] {
++            let options = Options::parse(value, None);
++            assert!(!options.enabled);
++            assert!(!options.urgency_accent);
++            assert_eq!(options.width(), 300);
++            assert_eq!(options.radius([2.0; 4]), [2.0; 4]);
++        }
++        let options = Options::parse(Some("1"), Some("1"));
++        assert!(options.enabled && options.urgency_accent);
++        assert_eq!(options.width(), 380);
++        assert_eq!(options.radius([2.0; 4]), [18.0; 4]);
++    }
++
++    #[test]
++    fn receipt_time_is_deterministic_and_handles_day_rollover() {
++        assert_eq!(timestamp(UNIX_EPOCH), "00:00 UTC");
++        assert_eq!(
++            timestamp(UNIX_EPOCH + Duration::from_secs(86399)),
++            "23:59 UTC"
++        );
++        assert_eq!(
++            timestamp(UNIX_EPOCH + Duration::from_secs(86400)),
++            "00:00 UTC"
++        );
++        assert_eq!(
++            timestamp(UNIX_EPOCH - Duration::from_secs(1)),
++            "Time unavailable"
++        );
++    }
++
++    fn luminance(rgb: [f32; 3]) -> f32 {
++        let linear = rgb.map(|v| {
++            if v <= 0.04045 {
++                v / 12.92
++            } else {
++                ((v + 0.055) / 1.055).powf(2.4)
++            }
++        });
++        linear[0] * 0.2126 + linear[1] * 0.7152 + linear[2] * 0.0722
++    }
++
++    fn contrast(a: [f32; 3], b: [f32; 3]) -> f32 {
++        let (a, b) = (luminance(a), luminance(b));
++        (a.max(b) + 0.05) / (a.min(b) + 0.05)
++    }
++
++    #[test]
++    fn text_and_boundaries_have_contrast_in_all_interaction_states() {
++        for dark in [false, true] {
++            for accent in [false, true] {
++                let colors = palette(dark, accent);
++                for surface in [colors.surface, colors.hover, colors.pressed] {
++                    assert!(contrast(colors.text, surface) >= 7.0);
++                    assert!(contrast(colors.border, surface) >= 3.0);
++                }
++            }
++        }
++    }
++}
