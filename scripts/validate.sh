@@ -14,6 +14,7 @@ while IFS= read -r -d '' script; do
 done < <(find scripts tests presets -type f -name '*.sh' -print0)
 bash tests/uniform-glass.sh
 bash tests/macos-performance.sh
+bash tests/notification-host-helper.sh
 if [[ ${1:-} = --notifications ]]; then
     bash tests/notification-cards.sh
 fi
