@@ -44,3 +44,15 @@ contrast. No Cargo dependencies are needed for those tests. Full libcosmic/daemo
 integration compilation is a separate prerequisite before calling this a release;
 the offline attempt was blocked by an uncached libcosmic dependency. No new runtime
 package is introduced. See [patch status](../notifications/patches/README.md).
+
+## Full pinned daemon build
+
+The `Notification patch build` GitHub Actions workflow uses a disposable Ubuntu
+24.04 runner, upstream Rust 1.93.0, and daemon commit
+`aa4dac2702506395ab76da1f6755e03b2ccb0db8`. It checks fixture provenance, applies
+the patch, then runs `cargo fmt --all -- --check`, `cargo check --locked` and
+`cargo build --locked`. Normal Cargo downloads remain in runner-local temporary
+storage; nothing is vendored into this project. Upstream Wayland/xkbcommon build
+headers are installed only on that disposable runner, not on the user's machine.
+The workflow neither starts nor installs a daemon. A passing run verifies compilation
+on that runner; controlled COSMIC/Wayland testing is still a separate milestone.
