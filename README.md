@@ -24,19 +24,19 @@ is based on COSMIC 1.9.0 on Wayland, including Intel Iris Xe.
 
 ## Themes
 
-`themes/uniform-glass/` hosts the Uniform Glass performance integration, derived
+[themes/uniform-glass/](themes/uniform-glass/README.md) hosts the Uniform Glass performance integration, derived
 from xarbit's Uniform Glass Dark. Theme imports are independent of layout presets.
 Other themes can be added without changing the project's identity.
 
 ## Presets
 
-`presets/macos-performance/` contains the optional compact top panel and floating,
+[presets/macos-performance/](presets/macos-performance/README.md) contains the optional compact top panel and floating,
 rounded bottom dock preset. Its installer is explicitly invoked by the user and
 backs up panel/dock configuration before changing managed keys.
 
 ## Notification roadmap
 
-`notifications/` tracks a more visible macOS-inspired card design using the existing
+[notifications/](notifications/README.md) tracks a more visible macOS-inspired card design using the existing
 COSMIC daemon where possible. COSMIC 1.9.0 uses shared theme/card colors; no isolated
 notification theme control was identified. Notification styling remains a roadmap,
 not an implemented daemon patch.
