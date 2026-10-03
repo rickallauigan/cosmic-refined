@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: MPL-2.0
+# shellcheck shell=bash disable=SC2034,SC2154
+# Packaged upstream software and source patch: GPL-3.0-only.
+pkgname=cosmic-switcher-refined
+pkgver=1.9.0
+pkgrel=1
+epoch=1
+pkgdesc='COSMIC native window switcher with Refined window-mode presentation'
+arch=(x86_64)
+url=https://github.com/rickallauigan/cosmic-refined
+license=(GPL-3.0-only)
+depends=(cosmic-icon-theme libgcc glibc libxkbcommon pop-launcher wayland)
+makedepends=(cargo clang git lld)
+provides=("cosmic-launcher=${epoch}:${pkgver}")
+conflicts=(cosmic-launcher)
+options=('!debug' '!lto')
+_revision=cc3d42bcc8fbcb67e6312f2766394e18b4d937d5
+source=("cosmic-launcher::git+https://github.com/pop-os/cosmic-launcher.git#commit=${_revision}"
+        cosmic-launcher-1.9.0-refined-switcher.patch arch-lto.patch)
+b2sums=(SKIP bd961ec606fb012bc95e86a66a0d26e41e4ded1ac5c6aec3ba725a448da4af069d7847982c6af1f00a4488f2df7a209779a1ad8a09606dcdb391e1fbe4acbee1 a83c9394a6975f848e6786b3760f762351dd95f6fcd6dcb51c1beb5fae65f46f4d1e218fae00b854e592639bbe7c086e7d9a78ae2e6b0a26702e33c9140553c5)
+prepare() {
+    cd "$srcdir/cosmic-launcher" || return 1
+    [[ $(git rev-parse HEAD) = "$_revision" ]] || return 1
+    [[ $(sha256sum Cargo.lock | awk '{print $1}') = f1210ef400d242444e9da5ce32b0e40bc5c33b4dac5fc91aeff1e43e82bf88f9 ]] || return 1
+    sha256sum Cargo.lock > "$srcdir/refined-switcher-lock.sha256"
+    git apply --check "$srcdir/cosmic-launcher-1.9.0-refined-switcher.patch" || return 1
+    git apply "$srcdir/cosmic-launcher-1.9.0-refined-switcher.patch" || return 1
+    # Preserve Arch's thin-LTO profile. Its historical context needs fuzz 2 on this tag.
+    patch -Np1 -i "$srcdir/arch-lto.patch" || return 1
+    cargo fetch --locked
+}
+build() {
+    cd "$srcdir/cosmic-launcher" || return 1
+    export RUSTFLAGS="${RUSTFLAGS:-} --cfg tokio_unstable -C link-arg=-fuse-ld=lld"
+    cargo fmt --all -- --check || return 1
+    cargo check --locked || return 1
+    cargo build --locked --release || return 1
+    sha256sum --check "$srcdir/refined-switcher-lock.sha256"
+}
+package() {
+    cd "$srcdir/cosmic-launcher" || return 1
+    install -Dm0755 target/release/cosmic-launcher "$pkgdir/usr/bin/cosmic-launcher"
+    local id=com.system76.CosmicLauncher
+    install -Dm0644 "target/xdgen/$id.desktop" "$pkgdir/usr/share/applications/$id.desktop"
+    install -Dm0644 "target/xdgen/$id.metainfo.xml" "$pkgdir/usr/share/appdata/$id.metainfo.xml"
+    install -Dm0644 "data/icons/$id.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/$id.svg"
+}

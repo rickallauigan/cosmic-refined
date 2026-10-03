@@ -30,17 +30,18 @@ modify its configuration, or provide launcher hooks, plugins or wrappers.
 App-switcher improvements remain a separate scope: window switching UX,
 app/window preview styling and keyboard switching ergonomics. They must use
 COSMIC-native facilities where practical and work independently of Vicinae,
-without taking over launcher/search workflows. No app-switcher implementation
-is included yet.
+without taking over launcher/search workflows. An experimental window-mode
+source patch is available; pinned build CI passes. Live switcher validation
+remains pending.
 
 ## Project roadmap
 
-Priority order: **notifications (center validation and notification/theme cleanup) → app switcher → performance benchmark → polish/release**.
+Priority order: **notifications (merged) → app switcher (current) → performance benchmark → polish/release**.
 
-1. **Notifications:** validate the optional banner patch and improve notification
-   center readability while preserving native integration and accessibility.
-2. **App switcher:** evaluate native app/window switching, previews and keyboard
-   ergonomics independently of launcher/search tools.
+1. **Notifications:** merged and visually validated; preserve native integration
+   and accessibility while tracking further interaction checks.
+2. **App switcher:** validate the native window-mode refinement and keyboard
+   ergonomics independently of launcher/search tools, without live thumbnails.
 3. **Performance benchmark:** add opt-in measurements for idle CPU/GPU usage and
    visible rendering costs, without a persistent monitoring service.
 4. **Polish/release:** refine theme and optional panel/dock variants, verify
@@ -108,3 +109,11 @@ The optional daemon/applet patches and upstream fixtures use GPL-3.0-only. See
 Initial standalone integration. Fixture validation covers configuration safety;
 live visual and accessibility verification and power measurements remain future work.
 Development does not require changing the live desktop. See [validation](docs/validation.md).
+
+The [native app/window switcher milestone](docs/app-switcher.md) now has an
+experimental rendering-only source patch, pinned Arch package recipe and CI.
+It preserves native window activation and reverse switching; Vicinae continues
+to own launcher/search. Pinned formatting, locked check/release build and stock
+package-inventory CI pass. Controlled live visual and performance validation
+remain pending; no switcher package has been installed. No additional service
+or timer is introduced.

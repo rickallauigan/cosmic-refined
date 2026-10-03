@@ -1,0 +1,66 @@
+name: Native switcher patch build
+on:
+  pull_request:
+    paths:
+      - 'switcher/**'
+      - 'tests/fixtures/cosmic-launcher-1.9.0/**'
+      - 'packaging/arch/app-switcher/**'
+      - 'scripts/*switcher*.sh'
+      - 'scripts/validate.sh'
+      - 'tests/*switcher*.sh'
+      - '.github/workflows/app-switcher-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-switcher:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install build prerequisites on disposable runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libarchive-tools shellcheck pkg-config clang lld libclang-dev libxkbcommon-dev libwayland-dev libinput-dev libudev-dev libpipewire-0.3-dev libpulse-dev libasound2-dev libdbus-1-dev
+          rustup toolchain install stable --profile minimal --component rustfmt
+      - name: Repository fixtures and lint
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          rustup default stable
+          bash scripts/validate.sh --notifications
+          shellcheck scripts/app-switcher-package-test.sh scripts/app-switcher-host-validate.sh scripts/publish-app-switcher.sh tests/app-switcher.sh tests/app-switcher-host.sh packaging/arch/app-switcher/PKGBUILD
+      - name: Fetch and patch pinned source
+        run: |
+          git init "$RUNNER_TEMP/cosmic-launcher"
+          git -C "$RUNNER_TEMP/cosmic-launcher" remote add origin https://github.com/pop-os/cosmic-launcher
+          git -C "$RUNNER_TEMP/cosmic-launcher" fetch --depth=1 origin cc3d42bcc8fbcb67e6312f2766394e18b4d937d5
+          git -C "$RUNNER_TEMP/cosmic-launcher" checkout --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/cosmic-launcher" rev-parse HEAD)" = cc3d42bcc8fbcb67e6312f2766394e18b4d937d5
+          cmp tests/fixtures/cosmic-launcher-1.9.0/app.rs "$RUNNER_TEMP/cosmic-launcher/src/app.rs"
+          echo 'f1210ef400d242444e9da5ce32b0e40bc5c33b4dac5fc91aeff1e43e82bf88f9  Cargo.lock' > "$RUNNER_TEMP/lock.sha256"
+          cd "$RUNNER_TEMP/cosmic-launcher"
+          sha256sum --check "$RUNNER_TEMP/lock.sha256"
+          git apply --check "$GITHUB_WORKSPACE/switcher/patches/cosmic-launcher-1.9.0-refined-switcher.patch"
+          git apply "$GITHUB_WORKSPACE/switcher/patches/cosmic-launcher-1.9.0-refined-switcher.patch"
+          patch -Np1 -i "$GITHUB_WORKSPACE/packaging/arch/app-switcher/arch-lto.patch"
+      - name: Format, check and build without lock changes
+        working-directory: ${{ runner.temp }}/cosmic-launcher
+        env:
+          RUSTFLAGS: '--cfg tokio_unstable -C link-arg=-fuse-ld=lld'
+        run: |
+          cargo +stable fmt --all -- --check
+          cargo +stable check --locked
+          cargo +stable build --locked --release
+          sha256sum --check "$RUNNER_TEMP/lock.sha256"
+      - name: Verify real package staging inventory
+        run: |
+          export srcdir="$RUNNER_TEMP" pkgdir="$RUNNER_TEMP/switcher-payload"
+          source packaging/arch/app-switcher/PKGBUILD
+          package
+          cd "$pkgdir"
+          find usr -printf '%p%y\n' | sed 's|d$|/|; s|f$||' | LC_ALL=C sort > "$RUNNER_TEMP/inventory"
+          diff -u "$GITHUB_WORKSPACE/packaging/arch/app-switcher/stock-files.txt" "$RUNNER_TEMP/inventory"
+          sha256sum usr/bin/cosmic-launcher
