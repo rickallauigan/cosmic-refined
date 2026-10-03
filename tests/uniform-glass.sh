@@ -17,6 +17,6 @@ for key in frosted_windows frosted_system_interface frosted_panel frosted_applet
     [[ $(sed -n "/^    $key: false,$/p" "$theme/UniformGlassDarkPerformance.ron" | wc -l) = 1 ]]
 done
 [[ $(sed -n '/^    frosted_maximized_apps: false,$/p' "$theme/UniformGlassDark.ron" | wc -l) = 1 ]]
-if rg -q 'is_frosted:' "$theme"/*.ron; then exit 1; fi
+if grep -q 'is_frosted:' "$theme"/*.ron; then exit 1; fi
 [[ -s $theme/LICENSE && -s $theme/README.md && -s $repo/LICENSE ]]
 echo 'PASS: theme parity and license/attribution files'
