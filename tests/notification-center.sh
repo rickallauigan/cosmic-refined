@@ -98,6 +98,8 @@ PYFIXTURE
     sha256sum() { if [[ ${1:-} = /usr/bin/cosmic-applets ]]; then echo "$stock_sha"; else command sha256sum "$@"; fi; }
     if main install "$temporary/fixture.pkg.tar" <<< CANCEL > /dev/null 2>&1; then exit 1; fi
     [[ ! -e $temporary/transaction ]]
+    # Called indirectly by the sourced helper's host_build function.
+    # shellcheck disable=SC2317
     makepkg() {
         [[ $* = '--cleanbuild --noconfirm' ]] || return 1
         [[ $GIT_CONFIG_GLOBAL = /dev/null && $GIT_CONFIG_NOSYSTEM = 1 && $GIT_CONFIG_COUNT = 0 ]] || return 1
