@@ -60,3 +60,14 @@ grouping, clear-all and actions. Truly isolated surfaces/18px corners require ei
 per-card local button styles or a notification-local grouped renderer; changing the
 shared `cards` widget globally is inappropriate. Keep this as a separate follow-up
 with expanded/collapsed groups, DND, history, keyboard and dark/light testing.
+
+## Current center implementation
+
+The original source table above describes stock release rendering. A separate
+GPL-3.0-only center patch now replaces only its cards rendering call with an
+applet-local renderer. Grouping state, messages, subscriptions and localized
+relative-time function remain unchanged. The custom full applets package is
+installed on the ThinkPad and its cached payload matches the live binary checksum.
+The center has passed offline locked checking; visual/interaction review remains
+pending. See notification-center.md and notification-session-conflicts.md. No
+global card styles, session PATH, Vicinae or working banner code are changed.

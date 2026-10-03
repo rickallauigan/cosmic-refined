@@ -45,13 +45,14 @@ not a rebuilt binary or a live notification rendering test.
 
 Changing builder background/container colors or generated shared component colors
 would affect unrelated COSMIC UI. Editing generated theme keys directly can also
-be overwritten when Appearance regenerates the theme. The original and performance
-RON files therefore remain unchanged. No safely isolated notification-only theme
+be overwritten when Appearance regenerates the theme. Notification work therefore does not change shared theme surfaces. The RON files
+are separately adapted to the pinned COSMIC 1.9 frosting schema. No safely isolated notification-only theme
 improvement was identified in this schema.
 
-The existing performance variant differs only in name and `is_frosted: false`;
-it does not increase notification contrast. The legacy import field should not be
-confused with all the individual frosted switches in newer generated v2 themes.
+The performance variant keeps the same palette and geometry while disabling
+all release-specific frosted flags, including frosted_maximized_apps. Legacy
+is_frosted has been replaced by those supported fields; this does not increase
+notification contrast. See themes/uniform-glass/README.md for schema provenance.
 
 ## Clean optional approaches
 

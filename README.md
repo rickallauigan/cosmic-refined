@@ -35,7 +35,7 @@ is included yet.
 
 ## Project roadmap
 
-Priority order: **notifications → app switcher → performance benchmark → polish/release**.
+Priority order: **notifications (center validation and notification/theme cleanup) → app switcher → performance benchmark → polish/release**.
 
 1. **Notifications:** validate the optional banner patch and improve notification
    center readability while preserving native integration and accessibility.
@@ -74,15 +74,19 @@ project scope.
 COSMIC daemon where possible. COSMIC 1.9.0 uses shared theme/card colors; no isolated
 notification theme control was identified. An [optional banner source patch](notifications/patches/README.md) implements local
 high-visibility rendering, with [full compilation verified](docs/notification-build-validation.md)
-and live testing still pending. Notification
-center improvements remain a roadmap.
+and popup visuals live verified by the ThinkPad user. An [Arch package test workflow](docs/notification-package-test.md)
+keeps normal session supervision and enables cards only in the explicitly installed
+custom package. A separate [experimental notification center patch and package](docs/notification-center.md) preserves grouping and native history behavior; the custom center package is installed and its applet runs, as reported by the user. Center visual review passed on COSMIC 1.9; additional live interaction checks remain separate. See [session conflict handling](docs/notification-session-conflicts.md).
 
 ## Component usage
 
 Early development: components are opt-in and applied separately through their own
-instructions and utilities. Nothing runs automatically at startup. Read each
-component's instructions before applying it. No root access or new packages are
-required. Removing this checkout does not undo previously imported settings; use
+instructions and utilities. No project helper is added to startup; installed
+packages use existing COSMIC launch mechanisms. Read each
+component's instructions before applying it. Themes and panel/dock presets need no
+root access or new packages. The optional Arch notification test builds a local
+package and requires a separately confirmed privileged pacman transaction. Removing
+this checkout does not undo previously imported settings or installed packages; use
 the component's restore/removal instructions first.
 
 ## Screenshots
@@ -96,12 +100,11 @@ Uniform Glass Dark originates from
 [xarbit/cosmic-uniform-glass-theme](https://github.com/xarbit/cosmic-uniform-glass-theme).
 COSMIC Desktop and its native components are developed by System76 and contributors.
 Theme/preset work uses MPL-2.0; the existing [LICENSE](LICENSE) is preserved.
-The optional daemon patch and upstream fixtures use GPL-3.0-only. See
+The optional daemon/applet patches and upstream fixtures use GPL-3.0-only. See
 [provenance](docs/provenance.md) for derived work and the prototype migration.
 
 ## Development status
 
 Initial standalone integration. Fixture validation covers configuration safety;
-live visual and accessibility verification, power measurements and notification
-implementation remain future work. Development does not require changing the live
-desktop. See [validation](docs/validation.md).
+live visual and accessibility verification and power measurements remain future work.
+Development does not require changing the live desktop. See [validation](docs/validation.md).

@@ -1,0 +1,69 @@
+name: Notification center patch build
+on:
+  pull_request:
+    paths:
+      - 'notifications/patches/cosmic-applets-*.patch'
+      - 'tests/fixtures/cosmic-applets-1.9.0/**'
+      - 'themes/uniform-glass/*.ron'
+      - 'tests/theme-schema.rs'
+      - 'packaging/arch/**'
+      - 'scripts/*.sh'
+      - 'tests/*.sh'
+      - '.github/workflows/notification-center-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-center:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: 'true'
+      CARGO_BUILD_JOBS: '2'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Install build prerequisites on disposable runner
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y libarchive-tools shellcheck pkg-config clang libclang-dev libxkbcommon-dev libwayland-dev libinput-dev libudev-dev libpipewire-0.3-dev libpulse-dev libasound2-dev libdbus-1-dev
+          rustup toolchain install stable --profile minimal --component rustfmt
+      - name: Run repository fixtures
+        run: |
+          export PATH="$HOME/.cargo/bin:$PATH"
+          rustup default stable
+          bash scripts/validate.sh --notifications
+          shellcheck scripts/notification-package-test.sh scripts/notification-center-package-test.sh scripts/notification-live-validate.sh tests/notification-package.sh tests/notification-center.sh tests/notification-live-validate.sh tests/uniform-glass.sh packaging/arch/PKGBUILD packaging/arch/notification-center/PKGBUILD
+      - name: Fetch pinned source and verify fixtures
+        run: |
+          git init "$RUNNER_TEMP/cosmic-applets"
+          git -C "$RUNNER_TEMP/cosmic-applets" remote add origin https://github.com/pop-os/cosmic-applets
+          git -C "$RUNNER_TEMP/cosmic-applets" fetch --depth=1 origin 82e7cd814addb0641959b634227fe550374e195b
+          git -C "$RUNNER_TEMP/cosmic-applets" checkout --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/cosmic-applets" rev-parse HEAD)" = 82e7cd814addb0641959b634227fe550374e195b
+          cmp tests/fixtures/cosmic-applets-1.9.0/lib.rs "$RUNNER_TEMP/cosmic-applets/cosmic-applet-notifications/src/lib.rs"
+          cmp tests/fixtures/cosmic-applets-1.9.0/en.ftl "$RUNNER_TEMP/cosmic-applets/cosmic-applet-notifications/i18n/en/cosmic_applet_notifications.ftl"
+          sha256sum "$RUNNER_TEMP/cosmic-applets/Cargo.lock" > "$RUNNER_TEMP/center-lock.sha256"
+          git -C "$RUNNER_TEMP/cosmic-applets" apply --check "$GITHUB_WORKSPACE/notifications/patches/cosmic-applets-1.9.0-refined-notification-center.patch"
+          git -C "$RUNNER_TEMP/cosmic-applets" apply "$GITHUB_WORKSPACE/notifications/patches/cosmic-applets-1.9.0-refined-notification-center.patch"
+      - name: Format, check and build without lock changes
+        working-directory: ${{ runner.temp }}/cosmic-applets
+        run: |
+          cargo +stable fmt --all -- --check
+          cargo +stable check --locked
+          cargo +stable build --locked
+          sha256sum --check "$RUNNER_TEMP/center-lock.sha256"
+      - name: Deserialize and build themes with the pinned release model
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, subprocess
+          deps = pathlib.Path(os.environ["RUNNER_TEMP"]) / "cosmic-applets/target/debug/deps"
+          theme = next(deps.glob("libcosmic_theme*.rlib"))
+          binary = str(pathlib.Path(os.environ["RUNNER_TEMP"]) / "theme-schema-check")
+          for ron in deps.glob("libron*.rlib"):
+              result = subprocess.run(["rustup", "run", "stable", "rustc", "--edition=2024", "-L", f"dependency={deps}", "--extern", f"cosmic_theme={theme}", "--extern", f"ron={ron}", "tests/theme-schema.rs", "-o", binary], capture_output=True, text=True)
+              if result.returncode == 0:
+                  break
+          else:
+              raise RuntimeError("Cannot link pinned theme-schema checker")
+          subprocess.run([binary, "themes/uniform-glass/UniformGlassDark.ron", "themes/uniform-glass/UniformGlassDarkPerformance.ron"], check=True)
+          PY

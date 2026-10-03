@@ -1,0 +1,212 @@
+diff --git a/cosmic-applet-notifications/i18n/en/cosmic_applet_notifications.ftl b/cosmic-applet-notifications/i18n/en/cosmic_applet_notifications.ftl
+index 72b1a87..a142dd3 100644
+--- a/cosmic-applet-notifications/i18n/en/cosmic_applet_notifications.ftl
++++ b/cosmic-applet-notifications/i18n/en/cosmic_applet_notifications.ftl
+@@ -15,3 +15,4 @@ clear-all = Clear all notifications
+ do-not-disturb = Do Not Disturb
+ notification-settings = Notification settings...
+ no-notifications = No notifications
++refined-critical = Critical
+diff --git a/cosmic-applet-notifications/src/lib.rs b/cosmic-applet-notifications/src/lib.rs
+index 4041d48..2c5f293 100644
+--- a/cosmic-applet-notifications/src/lib.rs
++++ b/cosmic-applet-notifications/src/lib.rs
+@@ -2,6 +2,7 @@
+ // SPDX-License-Identifier: GPL-3.0-only
+
+ mod localize;
++mod refined_center;
+ mod subscriptions;
+ use cosmic::{
+     Element, Task, app,
+@@ -20,7 +21,7 @@ use cosmic::{
+         window,
+     },
+     surface, theme,
+-    widget::{Column, button, cards, container, divider, icon, scrollable, space, text, toggler},
++    widget::{Column, button, container, divider, icon, scrollable, space, text, toggler},
+ };
+
+ use cosmic::iced::futures::executor::block_on;
+@@ -430,7 +431,7 @@ impl cosmic::Application for Notifications {
+                     .iter()
+                     .rev()
+                     .map(|n| {
+-                        let app_name = text::caption(Cow::from(&n.app_name))
++                        let app_name = text::body(Cow::from(&n.app_name))
+                             .ellipsize(Ellipsize::End(EllipsizeHeightLimit::Lines(1)))
+                             .width(Length::Fill);
+
+@@ -448,7 +449,7 @@ impl cosmic::Application for Notifications {
+                             Element::from(
+                                 column!(
+                                     if let Some(icon) = n.notification_icon() {
+-                                        row![icon.size(16), app_name, duration_since, close_notif]
++                                        row![icon.size(32), app_name, duration_since, close_notif]
+                                             .spacing(8)
+                                             .align_y(Alignment::Center)
+                                     } else {
+@@ -458,14 +459,24 @@ impl cosmic::Application for Notifications {
+                                     },
+                                     column![
+                                         text::body(n.summary.lines().next().unwrap_or_default())
++                                            .size(18)
++                                            .font(cosmic::iced::Font {
++                                                weight: cosmic::iced::font::Weight::Bold,
++                                                ..Default::default()
++                                            })
+                                             .width(Length::Fill),
+                                         Element::from(
+                                             rich_text(markup::html_to_spans(&n.body))
+-                                                .size(12.0)
++                                                .size(15.0)
+                                                 .width(Length::Fill)
+                                         )
+                                     ]
+                                 )
++                                .spacing(8)
++                                .push_maybe(
++                                    (n.urgency() == 2)
++                                        .then(|| text::caption(fl!("refined-critical")).size(14)),
++                                )
+                                 .width(Length::Fill),
+                             ),
+                         )
+@@ -497,9 +508,8 @@ impl cosmic::Application for Notifications {
+                         Some(cosmic::widget::icon::from_name(n.app_icon.as_str()).handle())
+                     }
+                 });
+-                let card_list = cards(
+-                    //cards
+-                    c.0.clone(),
++                let card_list = refined_center::group(
++                    c.1.iter().rev().map(|n| n.urgency() == 2).collect(),
+                     notif_elems,
+                     Message::ClearAll(Some(name.clone())),
+                     Some(move |e| Message::CardsToggled(name.clone(), e)),
+@@ -517,7 +527,7 @@ impl cosmic::Application for Notifications {
+             row!(
+                 scrollable(
+                     Column::with_children(notifs)
+-                        .spacing(8)
++                        .spacing(16)
+                         .height(Length::Shrink),
+                 )
+                 .height(Length::Shrink)
+diff --git a/cosmic-applet-notifications/src/refined_center.rs b/cosmic-applet-notifications/src/refined_center.rs
+new file mode 100644
+--- /dev/null
++++ b/cosmic-applet-notifications/src/refined_center.rs
+@@ -0,0 +1,112 @@
++// SPDX-License-Identifier: GPL-3.0-only
++// Notification-local rendering: retain the applet's state and message handlers.
++use cosmic::{
++    Element,
++    iced::{Alignment, Background, Border, Color, Length},
++    widget::{button, icon, text},
++};
++
++/// The collapsed first card expands its app group; expanded cards activate.
++/// Keep all dismissal buttons embedded in the supplied notification contents.
++#[allow(clippy::too_many_arguments)]
++pub fn group<'a, Message: Clone + 'static, F, G>(
++    critical: Vec<bool>,
++    elements: Vec<Element<'a, Message>>,
++    clear: Message,
++    toggle: Option<F>,
++    activate: Option<G>,
++    more: &'a str,
++    less: &'a str,
++    clear_label: &'a str,
++    app_icon: Option<icon::Handle>,
++    expanded: bool,
++) -> Element<'a, Message>
++where
++    F: Fn(bool) -> Message + 'a,
++    G: Fn(usize) -> Message + 'a,
++{
++    let multiple = elements.len() > 1;
++    let mut result = cosmic::widget::Column::new().spacing(8).width(Length::Fill);
++    if multiple && expanded {
++        let mut header = cosmic::widget::Row::new()
++            .spacing(8)
++            .align_y(Alignment::Center);
++        if let Some(handle) = app_icon {
++            header = header.push(icon::icon(handle).size(24));
++        }
++        header = header
++            .push(button::text(less).on_press_maybe(toggle.as_ref().map(|f| f(false))))
++            .push(button::text(clear_label).on_press(clear));
++        result = result.push(header);
++    }
++    for (i, element) in elements.into_iter().enumerate() {
++        if !expanded && i > 0 {
++            break;
++        }
++        let mut content = cosmic::widget::Column::new()
++            .push(element)
++            .spacing(8)
++            .width(Length::Fill);
++        if multiple && !expanded {
++            content = content.push(text::caption(more));
++        }
++        let message = if multiple && !expanded {
++            toggle.as_ref().map(|f| f(true))
++        } else {
++            activate.as_ref().map(|f| f(i))
++        };
++        let accented = critical.get(i).copied().unwrap_or(false);
++        result = result.push(
++            cosmic::iced::widget::button(content)
++                .on_press_maybe(message)
++                .padding(16)
++                .width(Length::Fill)
++                .class(cosmic::theme::iced::Button::Custom(Box::new(
++                    move |theme, status| {
++                        use cosmic::iced::widget::button::{Status, Style};
++                        let dark = theme.cosmic().is_dark;
++                        let (surface, foreground, neutral) = if dark {
++                            let background = match status {
++                                Status::Hovered => [0.15, 0.16, 0.18],
++                                Status::Pressed => [0.19, 0.20, 0.22],
++                                _ => [0.10, 0.11, 0.13],
++                            };
++                            (background, [0.97; 3], [0.55; 3])
++                        } else {
++                            let background = match status {
++                                Status::Hovered => [0.92; 3],
++                                Status::Pressed => [0.87; 3],
++                                _ => [0.98; 3],
++                            };
++                            (background, [0.08, 0.09, 0.11], [0.40; 3])
++                        };
++                        let boundary = if accented {
++                            if dark {
++                                [1.0, 0.65, 0.25]
++                            } else {
++                                [0.55, 0.24, 0.0]
++                            }
++                        } else {
++                            neutral
++                        };
++                        let color = |v: [f32; 3]| Color::from_rgb(v[0], v[1], v[2]);
++                        Style {
++                            background: Some(Background::Color(color(surface))),
++                            text_color: color(foreground),
++                            border: Border {
++                                color: color(boundary),
++                                width: if accented { 2.0 } else { 1.0 },
++                                radius: 18.0.into(),
++                            },
++                            border_radius: 18.0.into(),
++                            ..Default::default()
++                        }
++                    },
++                ))),
++        );
++    }
++    cosmic::widget::container(result)
++        .max_width(380)
++        .width(Length::Fill)
++        .into()
++}

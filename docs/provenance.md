@@ -27,7 +27,8 @@ remains the prototype record; it is not a runtime, test or installation dependen
 
 - Both Uniform Glass RON files derive from xarbit's MPL-2.0 theme. The original
   is retained as a comparison/reference; the performance variant retains its palette,
-  transparency and geometry. Theme bytes are preserved from the prototype.
+  transparency and geometry. Palette and geometry are preserved from the prototype; frosting fields have
+  been adapted to the pinned COSMIC 1.9 schema, including maximized frosting disabled.
 - The preset, installer, fixture tests and notification investigation originate
   in the old fork's added prototype work, not in the original theme upstream.
   COSMIC Refined adapts paths, backup naming, documentation and validation.
@@ -45,3 +46,10 @@ must retain their own upstream notices and identify their provenance.
 
 Separating optional themes, presets and notification research makes upstream theme
 updates easy to compare while allowing usability work to evolve independently.
+
+The experimental notification center patch and applet fixtures derive from
+[pop-os/cosmic-applets epoch-1.9.0](https://github.com/pop-os/cosmic-applets/tree/82e7cd814addb0641959b634227fe550374e195b),
+Copyright System76 and contributors, GPL-3.0-only. The retained Arch upstream
+recipe credits its maintainers/contributors verbatim; local packaging/helper files
+use MPL-2.0 and package GPL-3.0-only upstream software. The center patch is separate
+from the working notification-daemon patch and does not modify libcosmic.

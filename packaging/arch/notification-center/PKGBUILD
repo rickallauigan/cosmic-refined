@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: MPL-2.0
+# shellcheck shell=bash disable=SC2034,SC2154
+# Upstream software and the source patch: GPL-3.0-only.
+pkgname=cosmic-applets-refined
+pkgver=1.9.0
+pkgrel=1
+epoch=1
+pkgdesc='COSMIC applets with notification-local Refined history cards'
+arch=(x86_64)
+url=https://github.com/rickallauigan/cosmic-refined
+license=(GPL-3.0-only)
+depends=(cosmic-icon-theme dbus libgcc glibc libinput libpipewire libpulse libxkbcommon systemd-libs util-linux)
+makedepends=(cargo clang git lld)
+provides=("cosmic-applets=${epoch}:${pkgver}")
+conflicts=(cosmic-applets)
+options=('!debug' '!lto')
+_revision=82e7cd814addb0641959b634227fe550374e195b
+source=("cosmic-applets::git+https://github.com/pop-os/cosmic-applets.git#commit=${_revision}" cosmic-applets-1.9.0-refined-notification-center.patch)
+b2sums=(bcccb1036ea0c4de278728359cf24ded22973c3509d1023ddd8d022db294743ffe16b8afd3747e4f8feba59711605e7cdfa5f3127d51c6ad5a74c43c29d8a871 d9672aa025909954f05d71f382f04eb7ff95bf8eefbcaccf8c9cad395ff2af6b4bc57211471a86a9be7d81a3a0efe0e9b4990bbc104283b38754513272bfdefe)
+prepare() {
+    cd "$srcdir/cosmic-applets" || return
+    [[ $(git rev-parse HEAD) = "$_revision" ]] || return 1
+    sha256sum Cargo.lock > "$srcdir/refined-center-lock.sha256"
+    git apply --check "$srcdir/cosmic-applets-1.9.0-refined-notification-center.patch" || return 1
+    git apply "$srcdir/cosmic-applets-1.9.0-refined-notification-center.patch" || return 1
+    cargo fetch --locked --target x86_64-unknown-linux-gnu
+}
+build() {
+    cd "$srcdir/cosmic-applets" || return
+    export RUST_MIN_STACK=33554432
+    export RUSTFLAGS="${RUSTFLAGS:-} -C link-arg=-fuse-ld=lld"
+    cargo fmt --all -- --check || return 1
+    cargo check --locked || return 1
+    cargo build --locked --release || return 1
+    sha256sum --check "$srcdir/refined-center-lock.sha256"
+}
+package() {
+    cd "$srcdir/cosmic-applets" || return
+    # Equivalent to upstream just install, avoiding a build-only just dependency.
+    install -Dm0755 target/release/cosmic-applets "$pkgdir/usr/bin/cosmic-applets"
+    ln -s /usr/bin/cosmic-applets "$pkgdir/usr/bin/cosmic-panel-button"
+    local component asset relative desktop
+    for component in cosmic-app-list cosmic-applet-* cosmic-panel-button cosmic-panel-*-button; do
+        [[ -d $component/data ]] || continue
+        if [[ $component = cosmic-app-list || $component = cosmic-applet-* ]]; then
+            ln -s /usr/bin/cosmic-applets "$pkgdir/usr/bin/$component"
+        fi
+        if [[ -d $component/data/icons ]]; then
+            while IFS= read -r -d '' asset; do
+                relative=${asset#"$component/data/icons/"}
+                install -Dm0644 "$asset" "$pkgdir/usr/share/icons/hicolor/$relative"
+            done < <(find "$component/data/icons" -type f -print0)
+        fi
+        if [[ -d $component/data/default_schema ]]; then
+            while IFS= read -r -d '' asset; do
+                relative=${asset#"$component/data/default_schema/"}
+                install -Dm0644 "$asset" "$pkgdir/usr/share/cosmic/$relative"
+            done < <(find "$component/data/default_schema" -type f -print0)
+        fi
+    done
+    for desktop in target/xdgen/*.desktop; do
+        install -Dm0644 "$desktop" "$pkgdir/usr/share/applications/${desktop##*/}"
+    done
+    install -Dm0644 data/com.system76.CosmicApplets.metainfo.xml "$pkgdir/usr/share/metainfo/com.system76.CosmicApplets.metainfo.xml"
+    for relative in dbus-1/services/com.system76.CosmicStatusNotifierWatcher.service lib/systemd/user/com.system76.CosmicStatusNotifierWatcher.service; do
+        if [[ $relative = lib/* ]]; then
+            asset=cosmic-applet-status-area/data/com.system76.CosmicStatusNotifierWatcher.service.in
+            desktop="$pkgdir/usr/$relative"
+        else
+            asset=cosmic-applet-status-area/data/dbus-1/com.system76.CosmicStatusNotifierWatcher.service.in
+            desktop="$pkgdir/usr/share/$relative"
+        fi
+        install -Dm0644 /dev/null "$desktop"
+        sed 's|@bindir@|/usr/bin|' "$asset" > "$desktop"
+    done
+    install -Dm0644 cosmic-applet-network/data/dbus-1/system.d/com.system76.CosmicSettings.Applet.NetworkManager.SecretAgent.conf "$pkgdir/usr/share/dbus-1/system.d/com.system76.CosmicSettings.Applet.NetworkManager.SecretAgent.conf"
+}
