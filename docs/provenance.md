@@ -53,3 +53,13 @@ Copyright System76 and contributors, GPL-3.0-only. The retained Arch upstream
 recipe credits its maintainers/contributors verbatim; local packaging/helper files
 use MPL-2.0 and package GPL-3.0-only upstream software. The center patch is separate
 from the working notification-daemon patch and does not modify libcosmic.
+
+## Native window switcher
+
+The window-mode patch and pinned fixture derive from System76's
+`pop-os/cosmic-launcher`, GPL-3.0-only, release `epoch-1.9.0`, commit
+`cc3d42bcc8fbcb67e6312f2766394e18b4d937d5`. They retain that license, distinct from
+COSMIC Refined's original MPL-2.0 helper scripts and documentation. Arch's recipe
+and thin-LTO downstream patch are preserved with maintainer attribution under
+`packaging/arch/app-switcher/`; the downstream source patch remains GPL-derived.
+The package preserves upstream desktop metadata and does not customize search.

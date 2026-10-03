@@ -1,57 +1,41 @@
 # Development checkpoint — 2026-10-03
 
-## Completed and validated
+## Notifications milestone
 
-- Preserved all legitimate uncommitted migration, package and helper work.
-- Audited notification-local center rendering. Stock state/subscriptions, grouping,
-  relative timestamps, actions, dismissal, clear-all and DND handlers remain intact;
-  no new timers, polling, process, blur or animation framework.
-- Confirmed installed Refined package versions through read-only pacman metadata.
-  Cached center package metadata/inventory pass; its binary matches the reported
-  live SHA256 435a58a6b5ceb004425d496bcd89eb403c66e4fb575c2db339408efbbdd77d3d.
-- Center cargo fmt and full cargo check --locked pass offline using the host cache
-  copied into a temporary writable Cargo home. Cargo.lock matches upstream.
-- Updated both themes to the pinned 1.9 ThemeBuilder frosting schema. Actual
-  deserialization and generation using the pinned cosmic-theme rlibs pass; the
-  performance variant disables all frosting, including maximized apps.
-- Host diagnostic command and isolated fixtures added; no live service/config or
-  Vicinae changes. Mako remains masked. Package helpers keep normal pacman rollback
-  and do not restart processes; Git configuration isolation is build-local.
-- Repository tests, shell syntax, relevant ShellCheck, workflow YAML parsing and
-  diff whitespace checks pass. Center/theme CI is prepared, not remotely run.
+PR #2 is merged into main at `dda24527e078d7e765b084016a2412610d7f387d`.
+The user confirmed Refined banners and center visuals on COSMIC 1.9, including
+normal/critical cards, spacing, hierarchy, timestamp, coexistence and scrolling.
+Native grouping/state/actions/DND/relative-time handlers are preserved in source.
+Detailed real-app activation and every interaction were not separately live-proven;
+these remain follow-up checks, not a gate on beginning the switcher milestone.
+Notification packages, theme configuration, Vicinae and the mako mask are untouched.
 
-## Blocked / remaining
+The earlier center build checkpoint remains historical: locked check and theme
+schema deserialization passed using a temporary writable Cargo cache; the existing
+host-built release package matched the live binary. A duplicate release rebuild
+was interrupted, not counted as a fresh successful build. Subsequently published
+CI and the merged PR supersede the earlier publication blocker.
 
-- The sandbox cannot connect to the user bus (Operation not permitted); direct
-  live DBus/process/log and interactive history validation are not established.
-- .git is mounted read-only. Branch remains feat/notification-host-test-script;
-  no finalize commit, push, PR or remote CI was possible. Existing work was not
-  discarded and no API workaround was used to bypass the local restriction.
-- Required host review: run `bash scripts/notification-live-validate.sh --test`,
-  inspect notification history and confirm grouping/expansion, dismissal, clear-all,
-  DND and a real application's notification action. The helper does not supply
-  notification actions itself or erase the user's history automatically.
-- Notifications are not marked complete yet. App-switcher implementation,
-  stock-versus-Refined measurements and release approval remain gated on it.
-  Vicinae launcher/search is outside scope.
+## Current app/window switcher work
 
-Once live evidence and writable Git access are available, organize focused commits
-for notification center/package work, theme schema adaptation and validation/docs;
-open the requested feature PR, review the whole diff and wait for actual CI before
-merging. Do not restart/logout automatically or change the working mako mask.
+- Main synchronized to the merged commit; working files prepared for `feat/app-switcher`.
+- Exact COSMIC launcher source pinned to `cc3d42bcc8fbcb67e6312f2766394e18b4d937d5`.
+  Native frontend is resident/single-instance; metadata is event-driven. No new
+  idle process or wakeups are introduced by the rendering-only proposal.
+- Isolated window-mode patch, stock-inventory Arch recipe, independent rollback,
+  host process/checksum snapshots and pinned CI workflow implemented.
+- Full repository fixtures, source apply/reverse/drift tests, formatting, ShellCheck,
+  syntax, workflow YAML and whitespace checks (including new files) pass locally.
+- Local Cargo check stopped before compilation at uncached dependencies; the
+  isolated makepkg attempt stopped at GitHub DNS failure. No build/package success
+  is claimed. No live installation or host Alt+Tab benchmark was performed.
+- Sandbox .git remains read-only for branch creation/commits. The single host
+  helper `bash scripts/publish-app-switcher.sh` gates publication on an actual
+  host package build, captures an idle stock snapshot, creates focused commits,
+  pushes and opens a PR. It performs no installation or automatic merge.
 
-The duplicate release rebuild was interrupted after an extended final compilation
-without a new diagnostic, to avoid redundant resource use. No fresh release-build
-success is claimed. The existing host-built release package has been independently
-validated against the stock file inventory and the actual installed binary hash;
-its pinned lockfile and renderer source match. This artifact was preserved.
-
-## Latest user confirmation
-
-Center visual validation PASSED: normal/critical history, amber accent, rounded
-cards, icon/title/body hierarchy, timestamp/critical label, coexistence and
-scrolling, without visible corruption/crash. Record interaction tests separately;
-notify-send did not exercise application actions, DND or all dismissal/group controls.
-Git is still read-only. The host publication helper creates focused commits and
-a PR without automatic merging. CI and full diff review remain required.
-App-switcher source research has begun without live installation or launcher changes.
+After publication, review the full PR diff and all CI checks. Offer an explicit
+package installation only after build, inventory, CI and review pass. A manual
+logout/login and visual forward/reverse switching review are then required.
+Next milestones remain performance measurement and polish/release. No launcher
+work or extra persistent service is planned.

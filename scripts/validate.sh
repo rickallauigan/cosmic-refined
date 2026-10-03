@@ -21,6 +21,9 @@ bash tests/notification-package.sh
 bash -n packaging/arch/notification-center/PKGBUILD
 bash tests/notification-center.sh
 bash tests/notification-live-validate.sh
+bash -n packaging/arch/app-switcher/PKGBUILD
+bash tests/app-switcher.sh
+bash tests/app-switcher-host.sh
 if [[ ${1:-} = --notifications ]]; then
     bash tests/notification-cards.sh
 fi
