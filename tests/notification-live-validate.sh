@@ -31,19 +31,10 @@ printf '%s\n' "$*" >> "$test_notifications"
 MOCK
 cat > "$fixture/bin/sha256sum" <<'MOCK'
 #!/bin/bash
-for file in "$@"; do
-    case $file in
-        /usr/bin/cosmic-applets)
-            printf '%s  %s\n' '435a58a6b5ceb004425d496bcd89eb403c66e4fb575c2db339408efbbdd77d3d' "$file"
-            ;;
-        /usr/bin/cosmic-notifications)
-            printf '%s  %s\n' 'c255c17445cc3999bbfd4b96bcd0e61f1dc0664317bb665d652d664a9e01d193' "$file"
-            ;;
-        *)
-            exit 1
-            ;;
-    esac
-done
+set -euo pipefail
+[[ $# = 2 && $1 = /usr/bin/cosmic-applets && $2 = /usr/bin/cosmic-notifications ]]
+# Synthetic hashes; never read the host's packaged binaries.
+printf '%064d  %s\n' 1 "$1" 2 "$2"
 MOCK
 chmod +x "$fixture/bin/"*
 export test_notifications="$fixture/notifications"
@@ -51,8 +42,8 @@ PATH="$fixture/bin:$PATH" bash "$fixture/run.sh" --test > "$fixture/output"
 [[ $(wc -l < "$fixture/notifications") = 3 ]]
 grep -q 'Notification DBus owner: PID 123' "$fixture/output"
 grep -q 'Notification applet: PID 456' "$fixture/output"
-grep -q '435a58a6b5ceb004425d496bcd89eb403c66e4fb575c2db339408efbbdd77d3d  /usr/bin/cosmic-applets' "$fixture/output"
-grep -q 'c255c17445cc3999bbfd4b96bcd0e61f1dc0664317bb665d652d664a9e01d193  /usr/bin/cosmic-notifications' "$fixture/output"
+grep -q '^0000000000000000000000000000000000000000000000000000000000000001  /usr/bin/cosmic-applets$' "$fixture/output"
+grep -q '^0000000000000000000000000000000000000000000000000000000000000002  /usr/bin/cosmic-notifications$' "$fixture/output"
 rm "$fixture/proc/123/exe"
 ln -s /usr/bin/mako "$fixture/proc/123/exe"
 if PATH="$fixture/bin:$PATH" bash "$fixture/run.sh" > /dev/null 2>&1; then exit 1; fi
