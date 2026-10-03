@@ -31,7 +31,8 @@ App-switcher improvements remain a separate scope: window switching UX,
 app/window preview styling and keyboard switching ergonomics. They must use
 COSMIC-native facilities where practical and work independently of Vicinae,
 without taking over launcher/search workflows. An experimental window-mode
-source patch is available; compilation and live validation remain gated.
+source patch is available; pinned build CI passes. Live switcher validation
+remains pending.
 
 ## Project roadmap
 
@@ -112,5 +113,7 @@ Development does not require changing the live desktop. See [validation](docs/va
 The [native app/window switcher milestone](docs/app-switcher.md) now has an
 experimental rendering-only source patch, pinned Arch package recipe and CI.
 It preserves native window activation and reverse switching; Vicinae continues
-to own launcher/search. Compilation and live validation are still required
-before installation. No additional service or timer is introduced.
+to own launcher/search. Pinned formatting, locked check/release build and stock
+package-inventory CI pass. Controlled live visual and performance validation
+remain pending; no switcher package has been installed. No additional service
+or timer is introduced.

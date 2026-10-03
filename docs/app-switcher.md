@@ -2,8 +2,9 @@
 
 Vicinae owns launcher/search. Refined changes only COSMIC's existing window-mode
 presentation; it adds no launcher, keyboard binding, daemon or session override.
-This milestone is experimental: source fixtures pass, but compilation, CI and
-live visuals must pass before installation.
+This milestone is experimental: pinned compilation and package-inventory CI
+pass. Controlled live visual and performance validation remain pending; no
+switcher package has been installed.
 
 ## Pinned architecture
 
@@ -72,8 +73,9 @@ normal locked Cargo resolution, and subprocess-only Git config isolation to keep
 GitHub HTTPS dependencies from being rewritten to SSH. It changes no global Git
 config and installs no dependencies or packages. PKGBUILD runs formatting,
 `cargo check --locked`, and `cargo build --locked --release`, then verifies the
-unchanged lock and stock file inventory. A real Arch build is still required;
-Ubuntu CI also checks the real staging function against that same inventory.
+unchanged lock and stock file inventory. The host Arch build has passed; its
+source, unchanged lock, package metadata and payload were independently checked.
+Ubuntu CI also passed the real staging function against that same inventory.
 
 Package: `cosmic-switcher-refined 1:1.9.0-1`, providing
 `cosmic-launcher=1:1.9.0`, conflicting only with `cosmic-launcher`. It replaces the
@@ -151,9 +153,20 @@ restart cosmic-panel, or alter Vicinae to recover this package.
 
 Patch apply/reverse/drift, unchanged native logic, Rust formatting, package
 inventory and mock transaction/host snapshot tests run in repository validation.
-Local locked check was blocked before compilation by uncached Cargo dependencies
-(`clap` 4.6.7, among others) and sandbox Git DNS/cache permissions. The isolated `makepkg --cleanbuild --noconfirm` attempt also stopped at source
-download with GitHub DNS unavailable. No package artifact was created. No compiler
-or release-build success is claimed. The pinned CI workflow supplies ordinary network
-access. No live package install or stock host performance baseline was executed
-inside Codex.
+The earlier sandbox check and makepkg attempt stopped before compilation because
+of uncached dependencies and unavailable GitHub DNS. Those historical attempts
+are superseded by the successful host Arch build and CI at PR #3 head
+`dd14bcc48f9c2732cc227e3b5f206978a22e1380`:
+
+- [Native switcher patch build](https://github.com/rickallauigan/cosmic-refined/actions/runs/37092505177): fixtures/lint, exact pinned source, formatting,
+  `cargo check --locked`, `cargo build --locked --release`, unchanged Cargo.lock
+  and real package-staging inventory all passed.
+- [Notification center patch build](https://github.com/rickallauigan/cosmic-refined/actions/runs/37092505208): fixtures, pinned build and theme-schema checks passed.
+
+Final diff review found no source/package blocker: search rendering, native
+forward/reverse selection, Alt-release activation, multi-window ordering and
+subscriptions remain unchanged. No periodic work, additional process, global Git
+config mutation or unrelated settings change is introduced. Stock rollback remains
+`sudo pacman -S extra/cosmic-launcher`. The installed launcher remains stock.
+PR #3 is open and unmerged; merge requires explicit user authorization. Live
+visual/interaction and comparative performance evidence remain pending.

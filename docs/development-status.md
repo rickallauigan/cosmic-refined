@@ -18,7 +18,8 @@ CI and the merged PR supersede the earlier publication blocker.
 
 ## Current app/window switcher work
 
-- Main synchronized to the merged commit; working files prepared for `feat/app-switcher`.
+- PR #3 is published on `feat/app-switcher`, based on the merged main.
+  Reviewed build head: `dd14bcc48f9c2732cc227e3b5f206978a22e1380`.
 - Exact COSMIC launcher source pinned to `cc3d42bcc8fbcb67e6312f2766394e18b4d937d5`.
   Native frontend is resident/single-instance; metadata is event-driven. No new
   idle process or wakeups are introduced by the rendering-only proposal.
@@ -26,16 +27,22 @@ CI and the merged PR supersede the earlier publication blocker.
   host process/checksum snapshots and pinned CI workflow implemented.
 - Full repository fixtures, source apply/reverse/drift tests, formatting, ShellCheck,
   syntax, workflow YAML and whitespace checks (including new files) pass locally.
-- Local Cargo check stopped before compilation at uncached dependencies; the
-  isolated makepkg attempt stopped at GitHub DNS failure. No build/package success
-  is claimed. No live installation or host Alt+Tab benchmark was performed.
-- Sandbox .git remains read-only for branch creation/commits. The single host
-  helper `bash scripts/publish-app-switcher.sh` gates publication on an actual
-  host package build, captures an idle stock snapshot, creates focused commits,
-  pushes and opens a PR. It performs no installation or automatic merge.
+- Earlier sandbox check/makepkg failures were network/cache prerequisites, not
+  compiler failures. A real host Arch build passed; its source, unchanged lock,
+  package metadata and stock payload inventory were independently verified.
+- Native switcher CI run `37092505177` passed formatting, locked check/release
+  build, lockfile preservation and real package staging. Notification center CI
+  run `37092505208` also passed, including theme-schema validation.
+- Final diff audit found no source/package blocker. Search mode, native selection,
+  reverse switching, Alt-release activation, metadata/subscriptions and window
+  ordering remain intact. No new process, periodic work or global Git config
+  change. No notification/Vicinae/mako behavior changed.
+- Sandbox .git is read-only during this review; the documentation correction
+  needs a host commit/push. No live installation or session change was performed.
 
-After publication, review the full PR diff and all CI checks. Offer an explicit
-package installation only after build, inventory, CI and review pass. A manual
-logout/login and visual forward/reverse switching review are then required.
-Next milestones remain performance measurement and polish/release. No launcher
-work or extra persistent service is planned.
+PR #3 remains open and unmerged. Merge requires explicit user authorization and
+passing checks on the final published head. After approval, controlled live
+switcher validation still needs a manual login and visual forward/reverse review.
+Host idle snapshot capture is recorded by the publication helper; open-overlay
+and comparative performance measurements remain pending. Next milestones remain
+performance measurement and polish/release; no launcher work or extra service.
