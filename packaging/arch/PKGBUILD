@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MPL-2.0
+# shellcheck shell=bash
+# makepkg consumes these metadata variables and supplies startdir/srcdir/pkgdir.
+# shellcheck disable=SC2034,SC2154
+# Adapted metadata/build flags from Arch's cosmic-notifications 1:1.9.0-1 recipe.
+# Upstream daemon and both source patches are GPL-3.0-only.
+pkgname=cosmic-notifications-refined
+pkgver=1.9.0
+pkgrel=1
+epoch=1
+pkgdesc='COSMIC notifications with package-local Refined cards enabled by default'
+arch=(x86_64)
+url=https://github.com/rickallauigan/cosmic-refined
+license=(GPL-3.0-only)
+depends=(cosmic-icon-theme libgcc glibc libxkbcommon wayland)
+makedepends=(cargo git lld)
+provides=("cosmic-notifications=${epoch}:${pkgver}")
+conflicts=(cosmic-notifications)
+# No replaces: installation must be an explicit local pacman transaction.
+options=('!debug' '!lto')
+_revision=aa4dac2702506395ab76da1f6755e03b2ccb0db8
+source=(
+  "cosmic-notifications::git+https://github.com/pop-os/cosmic-notifications.git#commit=${_revision}"
+  cosmic-notifications-1.9.0-refined-cards.patch
+  refined-package-defaults.patch
+)
+b2sums=(
+  f79bd6746251ed85c69320a7ec907149a6f5c19692683e0b334e0924553afe7ba8ab52da51fdc497988845818c2cab97b415bd5b82f044dedece36b4e3e2d052
+  7b5c2cd347e51a095ede6d94a214076a40c505000347fd0ff9f732d5ec757b9be8c84166226b88119afca6380177bd0c60b2200a10a9f4296c6d6ebc83d7b772
+  ec531dd8452180131bcc93189c3dcacace15e2edf476ad0ac63fd4dfe200bdf13ca938e1548631c52484717711a038d0f47e169a7ccc96e57f2f3596f710bab7
+)
+prepare() {
+  cd "$srcdir/cosmic-notifications" || return
+  [[ $(git rev-parse HEAD) = "$_revision" ]]
+  sha256sum Cargo.lock > "$srcdir/refined-lock.sha256"
+  git apply --check "$srcdir/cosmic-notifications-1.9.0-refined-cards.patch"
+  git apply "$srcdir/cosmic-notifications-1.9.0-refined-cards.patch"
+  git apply --check "$srcdir/refined-package-defaults.patch"
+  git apply "$srcdir/refined-package-defaults.patch"
+  cargo fetch --locked --target x86_64-unknown-linux-gnu
+}
+build() {
+  cd "$srcdir/cosmic-notifications" || return
+  export RUST_MIN_STACK=33554432
+  # Equivalent to Arch's upstream just build-release flags; avoid requiring just.
+  export RUSTFLAGS="${RUSTFLAGS:-} --cfg tokio_unstable -C link-arg=-fuse-ld=lld -C link-arg=-Wl,--build-id=sha1 -C link-arg=-Wl,--no-rosegment"
+  cargo fmt --all -- --check
+  cargo check --locked
+  cargo build --locked --release
+  sha256sum --check "$srcdir/refined-lock.sha256"
+}
+package() {
+  cd "$srcdir/cosmic-notifications" || return
+  install -Dm0755 target/release/cosmic-notifications "$pkgdir/usr/bin/cosmic-notifications"
+}

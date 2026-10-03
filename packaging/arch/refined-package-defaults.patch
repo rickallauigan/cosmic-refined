@@ -1,0 +1,16 @@
+--- a/src/refined_cards.rs
++++ b/src/refined_cards.rs
+@@ -13,9 +13,11 @@
+         Self::parse(
+             std::env::var("COSMIC_REFINED_NOTIFICATION_CARDS")
+                 .ok()
+-                .as_deref(),
++                .as_deref()
++                .or(Some("1")),
+             std::env::var("COSMIC_REFINED_NOTIFICATION_URGENCY")
+                 .ok()
+-                .as_deref(),
++                .as_deref()
++                .or(Some("1")),
+         )
+     }
