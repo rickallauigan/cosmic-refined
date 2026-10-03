@@ -1,0 +1,199 @@
+diff --git a/src/app.rs b/src/app.rs
+index 223bb5d..8e06935 100644
+--- a/src/app.rs
++++ b/src/app.rs
+@@ -247,7 +247,11 @@ impl CosmicLauncher {
+             move |app: &mut CosmicLauncher| SctkLayerSurfaceSettings {
+                 id: app.window_id,
+                 keyboard_interactivity: KeyboardInteractivity::Exclusive,
+-                anchor: Anchor::TOP,
++                anchor: if app.alt_tab {
++                    Anchor::empty()
++                } else {
++                    Anchor::TOP
++                },
+                 namespace: "launcher".into(),
+                 size: None,
+                 size_limits: Limits::NONE.min_width(1.0).min_height(1.0).max_width(600.0),
+@@ -313,7 +317,7 @@ impl CosmicLauncher {
+         let mut cmds = Vec::with_capacity(2);
+         cmds.push(set_padding::<()>(self.window_id, self.layer_padding()).discard());
+         cmds.push(
+-            if self.core.system_theme().cosmic().frosted_system_interface {
++            if !self.alt_tab && self.core.system_theme().cosmic().frosted_system_interface {
+                 task::effect(Action::PlatformSpecific(
+                     platform_specific::Action::Wayland(
+                         cosmic::iced::runtime::platform_specific::wayland::Action::BlurSurface(
+@@ -341,7 +345,162 @@ impl CosmicLauncher {
+         Task::batch(cmds)
+     }
+
++    // Window-only presentation. Selection, metadata and activation remain native.
++    fn refined_switcher(&self) -> Element<'_, Message> {
++        const PAGE_SIZE: usize = 4;
++        let start = self.focused / PAGE_SIZE * PAGE_SIZE;
++        let visible = self
++            .launcher_items
++            .len()
++            .saturating_sub(start)
++            .min(PAGE_SIZE);
++        let width = (120.0 * visible as f32 + 8.0 * visible.saturating_sub(1) as f32).max(120.0);
++        let items = self
++            .launcher_items
++            .iter()
++            .enumerate()
++            .skip(start)
++            .take(PAGE_SIZE);
++        let mut tiles = row![].spacing(8).align_y(Alignment::Center);
++        for (i, item) in items {
++            let selected = i == self.focused;
++            let handle = self
++                .launcher_item_icon_handles
++                .get(i)
++                .and_then(|handle| handle.as_ref())
++                .cloned()
++                .unwrap_or_else(|| icon::from_name("application-x-executable").handle());
++            let content = column![
++                icon(handle).size(48),
++                text::body(&item.name)
++                    .size(16)
++                    .ellipsize(Ellipsize::End(EllipsizeHeightLimit::Lines(1))),
++            ]
++            .spacing(10)
++            .align_x(Alignment::Center);
++            tiles = tiles.push(
++                mouse_area(
++                    button::custom(content)
++                        .id(self.result_ids[i].clone())
++                        .width(Length::Fixed(120.0))
++                        .on_press(Message::Activate(Some(i)))
++                        .padding(12)
++                        .class(Button::Custom {
++                            active: Box::new(move |focused, theme| {
++                                Self::switcher_tile(theme, selected, focused)
++                            }),
++                            hovered: Box::new(move |_, theme| {
++                                Self::switcher_tile(theme, selected, true)
++                            }),
++                            pressed: Box::new(move |_, theme| {
++                                Self::switcher_tile(theme, selected, true)
++                            }),
++                            disabled: Box::new(move |theme| {
++                                Self::switcher_tile(theme, selected, false)
++                            }),
++                        }),
++                )
++                .on_right_release(Message::Context(i)),
++            );
++        }
++        let title = self
++            .launcher_items
++            .get(self.focused)
++            .map(|item| {
++                if item.window.is_some() && !item.description.is_empty() {
++                    item.description.as_str()
++                } else {
++                    item.name.as_str()
++                }
++            })
++            .unwrap_or("");
++        let content = column![
++            tiles,
++            text::body(title)
++                .size(18)
++                .font(cosmic::font::bold())
++                .ellipsize(Ellipsize::End(EllipsizeHeightLimit::Lines(1))),
++        ]
++        .spacing(16)
++        .width(Length::Fixed(width))
++        .align_x(Alignment::Center);
++        let window = container(id_container(content, MAIN_ID.clone()))
++            .padding(16)
++            .class(Container::Custom(Box::new(|theme| {
++                let dark = theme.cosmic().is_dark;
++                let foreground = if dark {
++                    Color::from_rgb(0.97, 0.97, 0.97)
++                } else {
++                    Color::from_rgb(0.08, 0.09, 0.11)
++                };
++                container::Style {
++                    text_color: Some(foreground),
++                    icon_color: Some(foreground),
++                    background: Some(
++                        if dark {
++                            Color::from_rgb(0.10, 0.11, 0.13)
++                        } else {
++                            Color::from_rgb(0.98, 0.98, 0.98)
++                        }
++                        .into(),
++                    ),
++                    border: Border {
++                        radius: 18.0.into(),
++                        width: 1.0,
++                        color: if dark {
++                            Color::from_rgb(0.55, 0.55, 0.55)
++                        } else {
++                            Color::from_rgb(0.40, 0.40, 0.40)
++                        },
++                    },
++                    shadow: Shadow::default(),
++                    snap: true,
++                }
++            })));
++        let window: Element<'_, Message> = if self.menu.is_some() {
++            mouse_area(window)
++                .on_release(Message::CloseContextMenu)
++                .on_right_release(Message::CloseContextMenu)
++                .into()
++        } else {
++            window.into()
++        };
++        autosize::autosize(window, AUTOSIZE_ID.clone()).into()
++    }
++
++    fn switcher_tile(theme: &cosmic::Theme, selected: bool, hovered: bool) -> button::Style {
++        let dark = theme.cosmic().is_dark;
++        button::Style {
++            background: Some(
++                if dark {
++                    Color::from_rgb(0.15, 0.16, 0.18)
++                } else {
++                    Color::from_rgb(0.92, 0.92, 0.92)
++                }
++                .into(),
++            ),
++            text_color: Some(if dark {
++                Color::from_rgb(0.97, 0.97, 0.97)
++            } else {
++                Color::from_rgb(0.08, 0.09, 0.11)
++            }),
++            border_radius: 12.0.into(),
++            border_width: if selected {
++                3.0
++            } else if hovered {
++                1.0
++            } else {
++                0.0
++            },
++            border_color: theme.cosmic().accent_color().into(),
++            ..button::Catalog::active(theme, false, false, &Button::Text)
++        }
++    }
++
+     fn layer_padding(&self) -> IcedMargin {
++        if self.alt_tab {
++            return IcedMargin::default();
++        }
+         IcedMargin {
+             #[allow(clippy::cast_possible_truncation)]
+             top: self.margin as i32 + 16,
+@@ -907,6 +1066,9 @@ impl cosmic::Application for CosmicLauncher {
+     #[allow(clippy::too_many_lines)]
+     fn view_window(&self, id: SurfaceId) -> Element<'_, Self::Message> {
+         if id == self.window_id {
++            if self.alt_tab {
++                return self.refined_switcher();
++            }
+             let launcher_entry = text_input::search_input(fl!("type-to-search"), &self.input_value)
+                 .on_input(Message::InputChanged)
+                 .on_paste(Message::InputChanged)
