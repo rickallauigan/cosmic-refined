@@ -59,3 +59,22 @@ on that runner; controlled COSMIC/Wayland testing is still a separate milestone.
 
 See [recorded build evidence](notification-build-validation.md) for the passing run,
 exact source/dependency revisions, warnings and remaining runtime limitations.
+
+## Current notification/theme validation
+
+`bash scripts/validate.sh --notifications` includes patch fixtures, package inventory,
+confirmation/rollback safety, host diagnostic mocks and both theme variants.
+Notification tests also need rustc/rustfmt, Python 3, bsdtar and the existing package
+build tools used by their fixtures. These are development prerequisites, not new
+runtime dependencies. ShellCheck is an additional development check.
+
+`tests/theme-schema.rs` deserializes and builds both themes against cosmic-theme
+and ron artifacts from the pinned 1.9 release build. This was run locally using
+cached release rlibs: both the builder and generated performance theme have every
+frosting flag disabled. The shell fixture preserves palette/geometry parity.
+
+A separate notification-center CI workflow fetches the exact release and compares
+fixtures before locked formatting/check/build. It has not run remotely while .git
+is read-only. Local compiled/package evidence is documented in notification-center.md.
+Live validation uses the host helper only; automated tests replace busctl, pacman,
+journalctl, systemctl and notify-send and use temporary process fixtures.

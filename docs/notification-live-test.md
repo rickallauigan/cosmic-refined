@@ -31,9 +31,11 @@ Unknown supervisors, wrapped autostarts, services containing unrelated processes
 and inherited `DAEMON_NOTIFICATIONS_FD`, `PANEL_NOTIFICATIONS_FD` or `WAYLAND_SOCKET`
 are also refused. Autostart files/user units are inspected for context, but file
 presence is not treated as proof of the running launch mechanism. Do not bypass
-these refusals or kill the daemon yourself to make this helper work. A safe approach
-for a session-managed daemon requires separate investigation and authorization;
-it is not implemented here. A terminal's shared service cgroup can also cause a
+these refusals or kill the daemon yourself to make this helper work. For a
+session-managed daemon, see the separate
+[next-login investigation and legacy recovery](notification-next-login-test.md).
+The earlier `.zlogin` strategy failed on the host; activation is blocked pending
+verified environment delivery. A terminal's shared service cgroup can also cause a
 conservative refusal, even if the user started a daemon manually.
 
 ## Commands

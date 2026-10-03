@@ -15,6 +15,12 @@ done < <(find scripts tests presets -type f -name '*.sh' -print0)
 bash tests/uniform-glass.sh
 bash tests/macos-performance.sh
 bash tests/notification-host-helper.sh
+bash tests/notification-next-login.sh
+bash -n packaging/arch/PKGBUILD
+bash tests/notification-package.sh
+bash -n packaging/arch/notification-center/PKGBUILD
+bash tests/notification-center.sh
+bash tests/notification-live-validate.sh
 if [[ ${1:-} = --notifications ]]; then
     bash tests/notification-cards.sh
 fi

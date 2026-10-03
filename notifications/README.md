@@ -1,17 +1,16 @@
 # Notification design and visibility roadmap
 
-Status: an [experimental optional banner source patch](patches/README.md) is now
-available for the pinned 1.9.0 daemon. Full compilation is [CI-verified](../docs/notification-build-validation.md);
-live rendering remains unverified;
-there is no notification installer or session override. Keep the existing
-lightweight `cosmic-notifications` daemon in your live session. The migrated
-[1.9.0 investigation](../docs/notification-visibility.md) found shared theme/card
-colors and no clean isolated notification theme control. Changing shared surfaces
-would also affect unrelated UI.
+Status: popup/banner visuals are **live verified by the ThinkPad user** with the
+custom Arch daemon package. Screenshots remain pending. The stock daemon package
+remains recoverable; normal COSMIC session supervision is preserved.
 
-See [architecture and exact source locations](../docs/notification-architecture.md).
-Banner geometry, local colors and static timestamps are implemented in the source
-prototype. Center readability remains a separately documented follow-up.
+The [separate notification center patch/package](../docs/notification-center.md)
+is experimental with center visuals now live verified by the ThinkPad user. It uses notification-local rendering,
+retains app grouping/actions/DND and existing localized relative timestamps.
+The user has installed cosmic-applets-refined 1:1.9.0-1; its applet is running. The cached package matches the reported live binary checksum. Center visual validation passed; detailed live interaction checks remain pending.
+See [banner build evidence](../docs/notification-build-validation.md) and
+[theme limitations](../docs/notification-visibility.md): neither patch globally
+changes theme/card surfaces or libcosmic.
 
 ## Design direction
 
@@ -56,6 +55,6 @@ the native tray visible to review missed banners. The layout preset preserves it
 applets. Placement and timeout options are discussed in the investigation, with
 limitations; no notification configuration is automatically applied here.
 
-Future work includes controlled live testing, native configuration/localization,
-center rendering, manual usability verification and rendering/power measurements. No notification
+Future work includes center compilation/live testing, native configuration/localization,
+manual accessibility verification and rendering/power measurements. No notification
 visibility improvement is claimed by the migrated performance theme itself.

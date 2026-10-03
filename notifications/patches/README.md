@@ -1,11 +1,11 @@
 # Experimental high-visibility banner patch
 
-**Compile-verified source prototype, not an installable release.** The pinned daemon
+**Compile-verified source patch with optional Arch test packaging.** The pinned daemon
 passed full formatting, `cargo check --locked` and `cargo build --locked` on a
 disposable CI runner. See [build evidence](../../docs/notification-build-validation.md).
-Live Wayland rendering remains unverified. The earlier local offline attempt was
+Popup rendering is now live verified by the ThinkPad user through the custom Arch package; screenshots remain pending. The earlier local offline attempt was
 blocked by missing libcosmic dependencies; CI resolved them through normal Cargo.
-A binary was built only on that runner; nothing was installed, replaced or started.
+The user subsequently installed the package on the host; project validation never installs or starts it.
 
 Target: `pop-os/cosmic-notifications` commit
 `aa4dac2702506395ab76da1f6755e03b2ccb0db8` (`epoch-1.9.0`). The patch changes only
@@ -71,10 +71,11 @@ git apply --reverse --check /path/to/cosmic-refined/notifications/patches/cosmic
 git apply --reverse /path/to/cosmic-refined/notifications/patches/cosmic-notifications-1.9.0-refined-cards.patch
 ```
 
-Removing the opt-in environment variables from a future patched launch selects
-stock rendering on its next start. Uninstalling a future custom binary would mean
-restoring the distribution daemon and its original launch path; no such binary or
-launch change exists yet.
+The canonical source patch is opt-in, but the custom Arch daemon package adds a
+separate default-on patch. Removing environment variables does not disable that
+package's defaults. Restore stock through pacman using the package rollback docs;
+COSMIC's normal launch path is unchanged. The user has installed the Refined
+package and confirmed banner visuals. No profile, PATH or session override is used.
 
 ## Tests, maintenance and license
 
@@ -96,3 +97,11 @@ The upstream license text is retained in [LICENSE-GPL-3.0.txt](LICENSE-GPL-3.0.t
 Other COSMIC Refined material retains its existing MPL-2.0 licensing. Revalidate the
 patch against each upstream release; do not apply it by line number or use fuzzy
 patching across versions. An upstream optional style API is the long-term direction.
+
+## Separate center patch
+
+`cosmic-applets-1.9.0-refined-notification-center.patch` targets commit
+`82e7cd814addb0641959b634227fe550374e195b` (epoch-1.9.0). It changes only notification
+applet rendering and an English Fluent message, under GPL-3.0-only (same license
+text in this directory). See [center design/build/rollback](../../docs/notification-center.md).
+It leaves the working daemon patch unchanged. Center visuals remain experimental.

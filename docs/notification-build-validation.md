@@ -3,7 +3,7 @@
 **Patch fully compiles and is ready for controlled live testing.** This means the
 source compilation prerequisite is met, not that live rendering is tested or that
 installation has been authorized. No installed daemon, live session or user COSMIC
-configuration was changed. Notification-center improvements remain documentation-only.
+configuration was changed. This historical CI evidence covers banners. The separate center patch/package now exists; see notification-center.md for current build and live-review status.
 
 ## Evidence and reproduction
 
